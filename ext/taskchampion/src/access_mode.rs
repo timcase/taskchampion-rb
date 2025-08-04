@@ -87,25 +87,25 @@ impl From<AccessMode> for TCAccessMode {
 
 pub fn init(module: &RModule) -> Result<(), Error> {
     let class = module.define_class("AccessMode", class::object())?;
-    
+
     // Constructor methods
     class.define_singleton_method("read_only", function!(AccessMode::read_only, 0))?;
     class.define_singleton_method("read_write", function!(AccessMode::read_write, 0))?;
-    
+
     // Predicate methods
     class.define_method("read_only?", method!(AccessMode::is_read_only, 0))?;
     class.define_method("read_write?", method!(AccessMode::is_read_write, 0))?;
-    
+
     // String representations
     class.define_method("to_s", method!(AccessMode::to_s, 0))?;
     class.define_method("inspect", method!(AccessMode::inspect, 0))?;
-    
+
     // Equality
     class.define_method("==", method!(AccessMode::eq, 1))?;
-    
+
     // Keep the constants for backward compatibility
     module.const_set("READ_ONLY", Symbol::new("read_only"))?;
     module.const_set("READ_WRITE", Symbol::new("read_write"))?;
-    
+
     Ok(())
 }
