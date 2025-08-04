@@ -24,27 +24,27 @@ rescue => e
   exit 1
 end
 
-# Test 3: Thread Safety Enforcement  
+# Test 3: Thread Safety Enforcement
 begin
   puts "\n🧵 Test 3: Thread Safety Enforcement"
   replica = Taskchampion::Replica.new_in_memory
-  
+
   thread_error_raised = false
   error_message = nil
-  
+
   Thread.new do
     begin
       replica.task_uuids # Should raise ThreadError
       puts "❌ No error raised - thread safety FAILED"
     rescue => e
-      thread_error_raised = true  
+      thread_error_raised = true
       error_message = e.message
       puts "✅ ThreadError raised: #{e.class} - #{e.message}"
     end
   end.join
-  
+
   if thread_error_raised
-    puts "✅ Test 3: Thread safety enforcement - SUCCESS" 
+    puts "✅ Test 3: Thread safety enforcement - SUCCESS"
   else
     puts "❌ Test 3: Thread safety enforcement - FAILED"
     exit 1
@@ -69,6 +69,6 @@ puts "\n" + "=" * 50
 puts "🎉 Phase 2 Validation: COMPLETE!"
 puts "✅ Extension loads successfully"
 puts "✅ ThreadBound implementation working"
-puts "✅ Thread safety enforcement active" 
+puts "✅ Thread safety enforcement active"
 puts "✅ Same-thread access functional"
 puts "\nReady to proceed to Phase 3!"

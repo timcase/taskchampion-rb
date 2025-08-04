@@ -17,7 +17,7 @@ class TestAccessMode < TaskchampionTest
 
     assert read_only.read_only?
     refute read_only.read_write?
-    
+
     assert read_write.read_write?
     refute read_write.read_only?
   end

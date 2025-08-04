@@ -24,7 +24,7 @@ class TestStatus < TaskchampionTest
     assert pending.pending?
     refute pending.completed?
     refute pending.deleted?
-    
+
     assert completed.completed?
     refute completed.pending?
     refute completed.deleted?
