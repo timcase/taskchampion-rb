@@ -8,7 +8,7 @@ class TestBasicFunctionality < Minitest::Test
 
   def test_thread_safety_enforcement
     replica = Taskchampion::Replica.new_in_memory
-    
+
     thread_error_raised = false
     Thread.new do
       begin
@@ -17,22 +17,22 @@ class TestBasicFunctionality < Minitest::Test
         thread_error_raised = true
       end
     end.join
-    
+
     assert thread_error_raised, "ThreadError should be raised on cross-thread access"
   end
 
   def test_basic_task_operations
     replica = Taskchampion::Replica.new_in_memory
     operations = Taskchampion::Operations.new
-    
+
     # Basic task creation and retrieval
     uuid = SecureRandom.uuid
     task = replica.create_task(uuid, operations)
     refute_nil task
-    
+
     # Commit the operations to persist the task
     replica.commit_operations(operations)
-    
+
     # Verify task can be retrieved
     retrieved = replica.task(uuid)
     refute_nil retrieved
