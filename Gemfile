@@ -12,6 +12,9 @@ group :development do
   gem "minitest", "~> 5.0"
   gem "mocha", "~> 2.0"
   gem "yard", "~> 0.9"
-  gem "rubocop", "~> 1.21"
   gem "irb"
+end
+
+group :rubocop do
+  gem "rubocop-rails-omakase", require: false
 end
