@@ -1,0 +1,247 @@
+use magnus::{
+    class, method, prelude::*, Error, IntoValue, RArray, RModule, Ruby, Symbol, Value,
+};
+use chrono::{DateTime, Utc};
+use taskchampion::Task as TCTask;
+
+use crate::annotation::Annotation;
+use crate::status::Status;
+use crate::tag::Tag;
+use crate::thread_check::ThreadBound;
+use crate::util::{datetime_to_ruby, into_error, option_to_ruby, ruby_to_datetime, ruby_to_option, uuid2tc, vec_to_ruby};
+use crate::{check_thread};
+
+#[magnus::wrap(class = "Taskchampion::Task", free_immediately)]
+pub struct Task(ThreadBound<TCTask>);
+
+impl Task {
+    pub fn from_tc_task(tc_task: TCTask) -> Self {
+        Task(ThreadBound::new(tc_task))
+    }
+
+    fn inspect(&self) -> Result<String, Error> {
+        let task = self.0.get()?;
+        Ok(format!("#<Taskchampion::Task: {}>", task.get_uuid()))
+    }
+
+    fn uuid(&self) -> Result<String, Error> {
+        let task = self.0.get()?;
+        Ok(task.get_uuid().to_string())
+    }
+
+    fn status(&self) -> Result<Symbol, Error> {
+        let task = self.0.get()?;
+        Ok(Status::from(task.get_status()).to_symbol())
+    }
+
+    fn description(&self) -> Result<String, Error> {
+        let task = self.0.get()?;
+        Ok(task.get_description().to_string())
+    }
+
+    fn entry(&self) -> Result<Value, Error> {
+        let task = self.0.get()?;
+        option_to_ruby(task.get_entry(), datetime_to_ruby)
+    }
+
+    fn priority(&self) -> Result<String, Error> {
+        let task = self.0.get()?;
+        Ok(task.get_priority().to_string())
+    }
+
+    fn wait(&self) -> Result<Value, Error> {
+        let task = self.0.get()?;
+        option_to_ruby(task.get_wait(), datetime_to_ruby)
+    }
+
+    fn modified(&self) -> Result<Value, Error> {
+        let task = self.0.get()?;
+        option_to_ruby(task.get_modified(), datetime_to_ruby)
+    }
+
+    fn due(&self) -> Result<Value, Error> {
+        let task = self.0.get()?;
+        option_to_ruby(task.get_due(), datetime_to_ruby)
+    }
+
+    fn dependencies(&self) -> Result<RArray, Error> {
+        let task = self.0.get()?;
+        let deps: Vec<String> = task.get_dependencies().map(|uuid| uuid.to_string()).collect();
+        vec_to_ruby(deps, |s| Ok(s.into_value()))
+    }
+
+    // Boolean methods with ? suffix
+    fn waiting(&self) -> Result<bool, Error> {
+        let task = self.0.get()?;
+        Ok(task.is_waiting())
+    }
+
+    fn active(&self) -> Result<bool, Error> {
+        let task = self.0.get()?;
+        Ok(task.is_active())
+    }
+
+    fn blocked(&self) -> Result<bool, Error> {
+        let task = self.0.get()?;
+        Ok(task.is_blocked())
+    }
+
+    fn blocking(&self) -> Result<bool, Error> {
+        let task = self.0.get()?;
+        Ok(task.is_blocking())
+    }
+
+    fn completed(&self) -> Result<bool, Error> {
+        let task = self.0.get()?;
+        Ok(task.get_status() == taskchampion::Status::Completed)
+    }
+
+    fn deleted(&self) -> Result<bool, Error> {
+        let task = self.0.get()?;
+        Ok(task.get_status() == taskchampion::Status::Deleted)
+    }
+
+    fn pending(&self) -> Result<bool, Error> {
+        let task = self.0.get()?;
+        Ok(task.get_status() == taskchampion::Status::Pending)
+    }
+
+    // Tag methods
+    fn has_tag(&self, tag: &Tag) -> Result<bool, Error> {
+        let task = self.0.get()?;
+        Ok(task.has_tag(tag.as_ref()))
+    }
+
+    fn tags(&self) -> Result<RArray, Error> {
+        let task = self.0.get()?;
+        let tags: Vec<Tag> = task.get_tags().map(Tag::from).collect();
+        vec_to_ruby(tags, |tag| {
+            Ok(tag.into_value()) // Convert to Value using IntoValue trait
+        })
+    }
+
+    fn annotations(&self) -> Result<RArray, Error> {
+        let task = self.0.get()?;
+        let annotations: Vec<Annotation> = task.get_annotations().map(Annotation::from).collect();
+        vec_to_ruby(annotations, |ann| {
+            Ok(ann.into_value()) // Convert to Value using IntoValue trait
+        })
+    }
+
+    // Value access
+    fn get_value(&self, property: String) -> Result<Value, Error> {
+        let task = self.0.get()?;
+        match task.get_value(property) {
+            Some(value) => Ok(value.into_value()),
+            None => Ok(().into_value()), // () converts to nil in Magnus
+        }
+    }
+
+    fn get_uda(&self, namespace: String, key: String) -> Result<Value, Error> {
+        let task = self.0.get()?;
+        match task.get_uda(&namespace, &key) {
+            Some(value) => Ok(value.into_value()),
+            None => Ok(().into_value()), // () converts to nil in Magnus
+        }
+    }
+
+    fn udas(&self) -> Result<RArray, Error> {
+        let task = self.0.get()?;
+        let udas: Vec<((String, String), String)> = task.get_udas()
+            .map(|((ns, key), value)| ((ns.to_string(), key.to_string()), value.to_string()))
+            .collect();
+        
+        vec_to_ruby(udas, |(key_tuple, value)| {
+            let array = RArray::new();
+            let key_array = RArray::new();
+            key_array.push(key_tuple.0)?;
+            key_array.push(key_tuple.1)?;
+            array.push(key_array)?;
+            array.push(value)?;
+            Ok(array.into_value())
+        })
+    }
+
+    // TODO: Mutation methods will need Operations parameter
+    // These are placeholders that return NotImplementedError until Operations is fully implemented
+    
+    fn set_status(&self, _status: Symbol, _operations: Value) -> Result<(), Error> {
+        Err(Error::new(
+            magnus::exception::not_imp_error(),
+            "Task mutation requires Operations class to be implemented",
+        ))
+    }
+
+    fn set_description(&self, _description: String, _operations: Value) -> Result<(), Error> {
+        Err(Error::new(
+            magnus::exception::not_imp_error(),
+            "Task mutation requires Operations class to be implemented",
+        ))
+    }
+
+    fn add_tag(&self, _tag: &Tag, _operations: Value) -> Result<(), Error> {
+        Err(Error::new(
+            magnus::exception::not_imp_error(),
+            "Task mutation requires Operations class to be implemented",
+        ))
+    }
+
+    fn remove_tag(&self, _tag: &Tag, _operations: Value) -> Result<(), Error> {
+        Err(Error::new(
+            magnus::exception::not_imp_error(),
+            "Task mutation requires Operations class to be implemented",
+        ))
+    }
+}
+
+// Remove AsRef implementation as it doesn't work well with thread bounds
+// Use direct method calls instead
+
+impl From<TCTask> for Task {
+    fn from(value: TCTask) -> Self {
+        Task(ThreadBound::new(value))
+    }
+}
+
+pub fn init(module: &RModule) -> Result<(), Error> {
+    let class = module.define_class("Task", class::object())?;
+    
+    // Property methods (Ruby idiomatic - no get_ prefix)
+    class.define_method("inspect", method!(Task::inspect, 0))?;
+    class.define_method("uuid", method!(Task::uuid, 0))?;
+    class.define_method("status", method!(Task::status, 0))?;
+    class.define_method("description", method!(Task::description, 0))?;
+    class.define_method("entry", method!(Task::entry, 0))?;
+    class.define_method("priority", method!(Task::priority, 0))?;
+    class.define_method("wait", method!(Task::wait, 0))?;
+    class.define_method("modified", method!(Task::modified, 0))?;
+    class.define_method("due", method!(Task::due, 0))?;
+    class.define_method("dependencies", method!(Task::dependencies, 0))?;
+    
+    // Boolean methods with ? suffix
+    class.define_method("waiting?", method!(Task::waiting, 0))?;
+    class.define_method("active?", method!(Task::active, 0))?;
+    class.define_method("blocked?", method!(Task::blocked, 0))?;
+    class.define_method("blocking?", method!(Task::blocking, 0))?;
+    class.define_method("completed?", method!(Task::completed, 0))?;
+    class.define_method("deleted?", method!(Task::deleted, 0))?;
+    class.define_method("pending?", method!(Task::pending, 0))?;
+    
+    // Tag methods
+    class.define_method("has_tag?", method!(Task::has_tag, 1))?;
+    class.define_method("tags", method!(Task::tags, 0))?;
+    class.define_method("annotations", method!(Task::annotations, 0))?;
+    
+    // Value access
+    class.define_method("get_value", method!(Task::get_value, 1))?;
+    class.define_method("get_uda", method!(Task::get_uda, 2))?;
+    class.define_method("udas", method!(Task::udas, 0))?;
+    
+    // Mutation methods (placeholders)
+    class.define_method("set_status", method!(Task::set_status, 2))?;
+    class.define_method("set_description", method!(Task::set_description, 2))?;
+    class.define_method("add_tag", method!(Task::add_tag, 2))?;
+    class.define_method("remove_tag", method!(Task::remove_tag, 2))?;
+    
+    Ok(())
+}

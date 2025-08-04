@@ -1,0 +1,10 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(bundle exec rake:*)",
+      "mcp__zen__chat",
+      "mcp__zen__thinkdeep"
+    ],
+    "deny": []
+  }
+}

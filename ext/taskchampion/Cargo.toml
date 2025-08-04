@@ -1,0 +1,20 @@
+[package]
+name = "taskchampion"
+version = "0.1.0"
+edition = "2021"
+authors = ["Tim Case <tim@2drops.net>"]
+publish = false
+
+[lib]
+name = "taskchampion"
+crate-type = ["cdylib"]
+
+[dependencies]
+magnus = { version = "0.7", features = ["rb-sys"] }
+rb-sys = "0.9"
+taskchampion = "2.0"
+chrono = "0.4"
+uuid = "1.0"
+
+[features]
+default = ["rb-sys/stable-api-compiled-fallback"]
