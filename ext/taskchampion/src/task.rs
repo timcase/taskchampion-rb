@@ -1,15 +1,13 @@
 use magnus::{
-    class, method, prelude::*, Error, IntoValue, RArray, RModule, Ruby, Symbol, Value,
+    class, method, prelude::*, Error, IntoValue, RArray, RModule, Symbol, Value,
 };
-use chrono::{DateTime, Utc};
 use taskchampion::Task as TCTask;
 
 use crate::annotation::Annotation;
 use crate::status::Status;
 use crate::tag::Tag;
 use crate::thread_check::ThreadBound;
-use crate::util::{datetime_to_ruby, into_error, option_to_ruby, ruby_to_datetime, ruby_to_option, uuid2tc, vec_to_ruby};
-use crate::{check_thread};
+use crate::util::{datetime_to_ruby, into_error, option_to_ruby, ruby_to_datetime, ruby_to_option, vec_to_ruby};
 
 #[magnus::wrap(class = "Taskchampion::Task", free_immediately)]
 pub struct Task(ThreadBound<TCTask>);
@@ -171,18 +169,20 @@ impl Task {
             ));
         }
         
-        let mut task = self.0.get()?;
-        let ops = &mut operations.clone_inner();
-        task.set_description(ops, description)
-            .map_err(into_error)
+        let mut task = self.0.get_mut()?;
+        operations.with_inner_mut(|ops| {
+            task.set_description(description.clone(), ops)
+        })?;
+        Ok(())
     }
 
     fn set_status(&self, status: Symbol, operations: &crate::operations::Operations) -> Result<(), Error> {
-        let mut task = self.0.get()?;
+        let mut task = self.0.get_mut()?;
         let status = Status::from_symbol(status)?;
-        let ops = &mut operations.clone_inner();
-        task.set_status(ops, status.into())
-            .map_err(into_error)
+        operations.with_inner_mut(|ops| {
+            task.set_status(status.into(), ops)
+        })?;
+        Ok(())
     }
 
     fn set_priority(&self, priority: String, operations: &crate::operations::Operations) -> Result<(), Error> {
@@ -193,24 +193,27 @@ impl Task {
             ));
         }
         
-        let mut task = self.0.get()?;
-        let ops = &mut operations.clone_inner();
-        task.set_priority(ops, &priority)
-            .map_err(into_error)
+        let mut task = self.0.get_mut()?;
+        operations.with_inner_mut(|ops| {
+            task.set_priority(priority.clone(), ops)
+        })?;
+        Ok(())
     }
 
     fn add_tag(&self, tag: &Tag, operations: &crate::operations::Operations) -> Result<(), Error> {
-        let mut task = self.0.get()?;
-        let ops = &mut operations.clone_inner();
-        task.add_tag(ops, tag.as_ref())
-            .map_err(into_error)
+        let mut task = self.0.get_mut()?;
+        operations.with_inner_mut(|ops| {
+            task.add_tag(tag.as_ref(), ops)
+        })?;
+        Ok(())
     }
 
     fn remove_tag(&self, tag: &Tag, operations: &crate::operations::Operations) -> Result<(), Error> {
-        let mut task = self.0.get()?;
-        let ops = &mut operations.clone_inner();
-        task.remove_tag(ops, tag.as_ref())
-            .map_err(into_error)
+        let mut task = self.0.get_mut()?;
+        operations.with_inner_mut(|ops| {
+            task.remove_tag(tag.as_ref(), ops)
+        })?;
+        Ok(())
     }
 
     fn add_annotation(&self, description: String, operations: &crate::operations::Operations) -> Result<(), Error> {
@@ -221,18 +224,34 @@ impl Task {
             ));
         }
         
-        let mut task = self.0.get()?;
-        let ops = &mut operations.clone_inner();
-        task.add_annotation(ops, description)
-            .map_err(into_error)
+        let mut task = self.0.get_mut()?;
+        use chrono::Utc;
+        use std::sync::atomic::{AtomicU64, Ordering};
+        
+        // Use an atomic counter to ensure unique second-level timestamps
+        // TaskChampion appears to truncate sub-second precision in property keys
+        static ANNOTATION_COUNTER: AtomicU64 = AtomicU64::new(0);
+        let counter = ANNOTATION_COUNTER.fetch_add(1, Ordering::SeqCst);
+        
+        // Get current time and add second offset to ensure uniqueness at TaskChampion's precision level
+        let base_time = Utc::now();
+        let now = base_time + chrono::Duration::seconds(counter as i64);
+        
+        
+        let annotation = taskchampion::Annotation { entry: now, description: description.clone() };
+        operations.with_inner_mut(|ops| {
+            task.add_annotation(annotation, ops)
+        })?;
+        Ok(())
     }
 
     fn set_due(&self, due: Value, operations: &crate::operations::Operations) -> Result<(), Error> {
-        let mut task = self.0.get()?;
-        let ops = &mut operations.clone_inner();
+        let mut task = self.0.get_mut()?;
         let due_datetime = ruby_to_option(due, ruby_to_datetime)?;
-        task.set_due(ops, due_datetime)
-            .map_err(into_error)
+        operations.with_inner_mut(|ops| {
+            task.set_due(due_datetime, ops)
+        })?;
+        Ok(())
     }
 
     fn set_value(&self, property: String, value: Value, operations: &crate::operations::Operations) -> Result<(), Error> {
@@ -243,15 +262,16 @@ impl Task {
             ));
         }
         
-        let mut task = self.0.get()?;
-        let ops = &mut operations.clone_inner();
+        let mut task = self.0.get_mut()?;
         let value_str = if value.is_nil() {
             None
         } else {
             Some(value.to_string())
         };
-        task.set_value(ops, &property, value_str)
-            .map_err(into_error)
+        operations.with_inner_mut(|ops| {
+            task.set_value(&property, value_str, ops)
+        })?;
+        Ok(())
     }
 
     fn set_uda(&self, namespace: String, key: String, value: String, operations: &crate::operations::Operations) -> Result<(), Error> {
@@ -268,10 +288,11 @@ impl Task {
             ));
         }
         
-        let mut task = self.0.get()?;
-        let ops = &mut operations.clone_inner();
-        task.set_uda(ops, &namespace, &key, &value)
-            .map_err(into_error)
+        let mut task = self.0.get_mut()?;
+        operations.with_inner_mut(|ops| {
+            task.set_uda(&namespace, &key, &value, ops)
+        })?;
+        Ok(())
     }
 
     fn delete_uda(&self, namespace: String, key: String, operations: &crate::operations::Operations) -> Result<(), Error> {
@@ -288,25 +309,13 @@ impl Task {
             ));
         }
         
-        let mut task = self.0.get()?;
-        let ops = &mut operations.clone_inner();
-        task.remove_uda(ops, &namespace, &key)
-            .map_err(into_error)
+        let mut task = self.0.get_mut()?;
+        operations.with_inner_mut(|ops| {
+            task.remove_uda(&namespace, &key, ops)
+        })?;
+        Ok(())
     }
 
-    // Ruby-style setter methods (convenience wrappers)
-    // Note: These require an Operations object to be passed to the Ruby method
-    fn set_description_eq(&self, description: String, operations: &crate::operations::Operations) -> Result<(), Error> {
-        self.set_description(description, operations)
-    }
-
-    fn set_status_eq(&self, status: Symbol, operations: &crate::operations::Operations) -> Result<(), Error> {
-        self.set_status(status, operations)
-    }
-
-    fn set_priority_eq(&self, priority: String, operations: &crate::operations::Operations) -> Result<(), Error> {
-        self.set_priority(priority, operations)
-    }
 }
 
 // Remove AsRef implementation as it doesn't work well with thread bounds
@@ -366,10 +375,6 @@ pub fn init(module: &RModule) -> Result<(), Error> {
     class.define_method("set_uda", method!(Task::set_uda, 4))?;
     class.define_method("delete_uda", method!(Task::delete_uda, 3))?;
 
-    // Ruby-style setter methods (require operations parameter)
-    class.define_method("description=", method!(Task::set_description_eq, 2))?;
-    class.define_method("status=", method!(Task::set_status_eq, 2))?;
-    class.define_method("priority=", method!(Task::set_priority_eq, 2))?;
 
     Ok(())
 }

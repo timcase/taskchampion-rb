@@ -23,12 +23,14 @@ impl WorkingSet {
         let working_set = self.0.get()?;
         match working_set.by_index(index) {
             Some(uuid) => {
-                // WorkingSet returns UUID, not Task
+                // For now, return the UUID string - we'll need to solve the task lookup problem
+                // in a different way since WorkingSet doesn't have access to the replica
                 Ok(uuid.to_string().into_value())
             }
             None => Ok(().into_value()),
         }
     }
+
 
     fn by_uuid(&self, uuid: String) -> Result<Value, Error> {
         let working_set = self.0.get()?;

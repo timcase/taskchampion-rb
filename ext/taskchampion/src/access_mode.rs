@@ -1,4 +1,4 @@
-use magnus::{class, function, method, prelude::*, Error, RModule, Symbol, Value};
+use magnus::{class, function, method, prelude::*, Error, RModule, Symbol};
 pub use taskchampion::storage::AccessMode as TCAccessMode;
 
 #[magnus::wrap(class = "Taskchampion::AccessMode", free_immediately)]

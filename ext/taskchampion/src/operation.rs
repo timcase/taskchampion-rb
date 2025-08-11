@@ -1,12 +1,9 @@
 use magnus::{
-    class, function, method, prelude::*, Error, IntoValue, RHash, RModule, Ruby, Value,
+    class, function, method, prelude::*, Error, IntoValue, RHash, RModule, Value,
 };
-use chrono::{DateTime, Utc};
-use std::collections::HashMap;
 use taskchampion::Operation as TCOperation;
 
 use crate::util::{datetime_to_ruby, ruby_to_datetime, ruby_to_hashmap, uuid2tc};
-use crate::error::validation_error;
 
 #[magnus::wrap(class = "Taskchampion::Operation", free_immediately)]
 pub struct Operation(TCOperation);

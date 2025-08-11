@@ -1,4 +1,4 @@
-use magnus::{class, function, method, prelude::*, Error, RModule, Symbol, Value};
+use magnus::{class, function, method, prelude::*, Error, RModule, Symbol};
 pub use taskchampion::Status as TCStatus;
 use crate::error::validation_error;
 
@@ -151,6 +151,7 @@ pub fn init(module: &RModule) -> Result<(), Error> {
     class.define_singleton_method("deleted", function!(Status::deleted, 0))?;
     class.define_singleton_method("recurring", function!(Status::recurring, 0))?;
     class.define_singleton_method("unknown", function!(Status::unknown, 0))?;
+    class.define_singleton_method("from_symbol", function!(Status::from_symbol, 1))?;
     
     // Predicate methods
     class.define_method("pending?", method!(Status::is_pending, 0))?;

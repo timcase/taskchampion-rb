@@ -9,6 +9,19 @@ require "tmpdir"
 require "fileutils"
 require "securerandom"
 
+module Minitest
+  module Assertions
+    def assert_nothing_raised(*args)
+      msg = args.last.is_a?(String) ? args.pop : nil
+      exceptions_to_catch = args.empty? ? [StandardError] : args
+
+      yield
+    rescue *exceptions_to_catch => e
+      raise Minitest::Assertion, "#{msg}#{msg ? "\n" : ""}#{e.class}: #{e.message}"
+    end
+  end
+end
+
 class TaskchampionTest < Minitest::Test
   def setup
     @temp_dir = Dir.mktmpdir("taskchampion-test")

@@ -1,5 +1,4 @@
 use magnus::{class, function, method, prelude::*, Error, RModule, Ruby, Value};
-use chrono::{DateTime, Utc};
 use taskchampion::Annotation as TCAnnotation;
 use crate::util::{datetime_to_ruby, ruby_to_datetime};
 

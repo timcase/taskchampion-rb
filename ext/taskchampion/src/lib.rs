@@ -1,4 +1,4 @@
-use magnus::{prelude::*, Error, Ruby};
+use magnus::{Error, Ruby};
 
 mod error;
 mod thread_check;

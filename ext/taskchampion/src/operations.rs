@@ -1,5 +1,5 @@
 use magnus::{
-    class, function, method, prelude::*, Error, RArray, RModule, Ruby, Value,
+    class, function, method, prelude::*, Error, IntoValue, RArray, RModule, Ruby, Value,
 };
 use std::cell::RefCell;
 use taskchampion::Operations as TCOperations;
@@ -40,7 +40,32 @@ impl Operations {
         Ok(operation)
     }
 
-    fn each(&self) -> Result<RArray, Error> {
+    fn each(&self) -> Result<Value, Error> {
+        let ruby = magnus::Ruby::get().map_err(|e| Error::new(
+            magnus::exception::runtime_error(),
+            format!("Failed to get Ruby context: {}", e),
+        ))?;
+        
+        // Check if a block was given
+        if ruby.block_given() {
+            let ops = self.0.borrow();
+            let block = ruby.block_proc()?;
+            
+            for op in ops.iter() {
+                let operation = Operation::from(op.clone());
+                block.call::<_, Value>((operation,))?;
+            }
+            
+            // Ruby's each method returns self when called with a block
+            let ruby = magnus::Ruby::get().unwrap();
+            Ok(ruby.qnil().into_value())
+        } else {
+            // No block given, return an enumerator (or array for simplicity)
+            self.to_array()
+        }
+    }
+    
+    fn to_array(&self) -> Result<Value, Error> {
         let array = RArray::new();
         let ops = self.0.borrow();
         
@@ -50,7 +75,7 @@ impl Operations {
             array.push(operation)?;
         }
         
-        Ok(array)
+        Ok(array.into_value())
     }
 
     fn inspect(&self) -> String {
@@ -64,6 +89,17 @@ impl Operations {
     // Internal method for accessing the operations
     pub(crate) fn clone_inner(&self) -> TCOperations {
         self.0.borrow().clone()
+    }
+
+    pub(crate) fn with_inner_mut<T, F>(&self, f: F) -> Result<T, Error>
+    where
+        F: FnOnce(&mut TCOperations) -> Result<T, taskchampion::Error>,
+    {
+        let mut ops = self.0.borrow_mut();
+        f(&mut *ops).map_err(|e| Error::new(
+            magnus::exception::runtime_error(),
+            e.to_string(),
+        ))
     }
 
     // Internal method for pushing operations from TaskChampion
@@ -102,7 +138,7 @@ pub fn init(module: &RModule) -> Result<(), Error> {
     class.define_method("empty?", method!(Operations::empty, 0))?;
     class.define_method("[]", method!(Operations::get, 1))?;
     class.define_method("each", method!(Operations::each, 0))?;
-    class.define_method("to_a", method!(Operations::each, 0))?;
+    class.define_method("to_a", method!(Operations::to_array, 0))?;
     class.define_method("inspect", method!(Operations::inspect, 0))?;
     class.define_method("clear", method!(Operations::clear, 0))?;
     

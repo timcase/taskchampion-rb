@@ -1,18 +1,15 @@
 use magnus::{
-    class, function, method, prelude::*, Error, IntoValue, RArray, RClass, RHash, RModule, Ruby, Symbol, TryConvert, Value,
+    class, function, method, prelude::*, Error, IntoValue, RArray, RHash, RModule, Symbol, TryConvert, Value,
 };
-use std::collections::HashMap;
 use taskchampion::{Replica as TCReplica, ServerConfig, StorageConfig};
 
 use crate::access_mode::AccessMode;
-use crate::error::storage_error;
 use crate::operations::Operations;
 use crate::task::Task;
 use crate::working_set::WorkingSet;
 use crate::dependency_map::DependencyMap;
 use crate::thread_check::ThreadBound;
-use crate::util::{hashmap_to_ruby, into_error, option_to_ruby, uuid2tc, vec_to_ruby};
-use crate::{check_thread};
+use crate::util::{into_error, option_to_ruby, uuid2tc, vec_to_ruby};
 
 #[magnus::wrap(class = "Taskchampion::Replica", free_immediately)]
 pub struct Replica(ThreadBound<TCReplica>);
@@ -167,10 +164,19 @@ impl Replica {
         kwargs: RHash,
     ) -> Result<(), Error> {
         
-        // Extract required keyword arguments
-        let url: String = kwargs.fetch(Symbol::new("url"))?;
-        let client_id: String = kwargs.fetch(Symbol::new("client_id"))?;
-        let encryption_secret: String = kwargs.fetch(Symbol::new("encryption_secret"))?;
+        // Extract required keyword arguments with proper exception type
+        let url: String = kwargs.fetch(Symbol::new("url")).map_err(|_| Error::new(
+            magnus::exception::arg_error(),
+            "Missing required parameter: url"
+        ))?;
+        let client_id: String = kwargs.fetch(Symbol::new("client_id")).map_err(|_| Error::new(
+            magnus::exception::arg_error(),
+            "Missing required parameter: client_id"
+        ))?;
+        let encryption_secret: String = kwargs.fetch(Symbol::new("encryption_secret")).map_err(|_| Error::new(
+            magnus::exception::arg_error(),
+            "Missing required parameter: encryption_secret"
+        ))?;
         let avoid_snapshots: bool = kwargs
             .fetch::<_, Value>(Symbol::new("avoid_snapshots"))
             .ok()
@@ -208,10 +214,19 @@ impl Replica {
     }
 
     fn sync_to_gcp(&self, kwargs: RHash) -> Result<(), Error> {
-        // Extract required keyword arguments
-        let bucket: String = kwargs.fetch(Symbol::new("bucket"))?;
-        let credential_path: String = kwargs.fetch(Symbol::new("credential_path"))?;
-        let encryption_secret: String = kwargs.fetch(Symbol::new("encryption_secret"))?;
+        // Extract required keyword arguments with proper exception type
+        let bucket: String = kwargs.fetch(Symbol::new("bucket")).map_err(|_| Error::new(
+            magnus::exception::arg_error(),
+            "Missing required parameter: bucket"
+        ))?;
+        let credential_path: String = kwargs.fetch(Symbol::new("credential_path")).map_err(|_| Error::new(
+            magnus::exception::arg_error(),
+            "Missing required parameter: credential_path"
+        ))?;
+        let encryption_secret: String = kwargs.fetch(Symbol::new("encryption_secret")).map_err(|_| Error::new(
+            magnus::exception::arg_error(),
+            "Missing required parameter: encryption_secret"
+        ))?;
         let avoid_snapshots: bool = kwargs
             .fetch::<_, Value>(Symbol::new("avoid_snapshots"))
             .ok()

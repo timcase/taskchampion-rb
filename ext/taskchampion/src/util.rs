@@ -1,4 +1,4 @@
-use magnus::{Error, Value, RString, RHash, RArray, Ruby, IntoValue, prelude::*};
+use magnus::{Error, Value, RString, RHash, RArray, IntoValue, prelude::*};
 use taskchampion::Uuid;
 use chrono::{DateTime, Utc};
 use std::collections::HashMap;
@@ -46,7 +46,7 @@ pub fn ruby_to_datetime(value: Value) -> Result<DateTime<Utc>, Error> {
             ))
     } else {
         // Convert Ruby DateTime/Time to ISO string then parse
-        match value.funcall::<_, String>("iso8601", ()) {
+        match value.funcall::<_, (), String>("iso8601", ()) {
             Ok(iso_string) => {
                 DateTime::parse_from_rfc3339(&iso_string)
                     .map(|dt| dt.with_timezone(&Utc))
