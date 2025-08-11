@@ -206,6 +206,44 @@ impl Replica {
         
         tc_replica.expire_tasks().map_err(into_error)
     }
+
+    fn sync_to_gcp(&self, kwargs: RHash) -> Result<(), Error> {
+        // Extract required keyword arguments
+        let bucket: String = kwargs.fetch(Symbol::new("bucket"))?;
+        let credential_path: String = kwargs.fetch(Symbol::new("credential_path"))?;
+        let encryption_secret: String = kwargs.fetch(Symbol::new("encryption_secret"))?;
+        let avoid_snapshots: bool = kwargs
+            .fetch::<_, Value>(Symbol::new("avoid_snapshots"))
+            .ok()
+            .and_then(|v| bool::try_convert(v).ok())
+            .unwrap_or(false);
+        
+        let mut tc_replica = self.0.get_mut()?;
+        
+        let mut server = ServerConfig::Gcp {
+            bucket,
+            credential_path: credential_path.into(),
+            encryption_secret: encryption_secret.into(),
+        }
+        .into_server()
+        .map_err(into_error)?;
+        
+        tc_replica
+            .sync(&mut server, avoid_snapshots)
+            .map_err(into_error)
+    }
+
+    fn num_local_operations(&self) -> Result<usize, Error> {
+        let mut tc_replica = self.0.get_mut()?;
+        
+        Ok(tc_replica.num_local_operations().map_err(into_error)?)
+    }
+
+    fn num_undo_points(&self) -> Result<usize, Error> {
+        let mut tc_replica = self.0.get_mut()?;
+        
+        Ok(tc_replica.num_undo_points().map_err(into_error)?)
+    }
 }
 
 pub fn init(module: &RModule) -> Result<(), Error> {
@@ -226,8 +264,11 @@ pub fn init(module: &RModule) -> Result<(), Error> {
     class.define_method("dependency_map", method!(Replica::dependency_map, 1))?;
     class.define_method("sync_to_local", method!(Replica::sync_to_local, 2))?;
     class.define_method("sync_to_remote", method!(Replica::sync_to_remote, 1))?;
+    class.define_method("sync_to_gcp", method!(Replica::sync_to_gcp, 1))?;
     class.define_method("rebuild_working_set", method!(Replica::rebuild_working_set, 1))?;
     class.define_method("expire_tasks", method!(Replica::expire_tasks, 0))?;
+    class.define_method("num_local_operations", method!(Replica::num_local_operations, 0))?;
+    class.define_method("num_undo_points", method!(Replica::num_undo_points, 0))?;
     
     Ok(())
 }
