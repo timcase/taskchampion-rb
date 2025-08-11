@@ -150,7 +150,7 @@ impl Task {
         let udas: Vec<((String, String), String)> = task.get_udas()
             .map(|((ns, key), value)| ((ns.to_string(), key.to_string()), value.to_string()))
             .collect();
-        
+
         vec_to_ruby(udas, |(key_tuple, value)| {
             let array = RArray::new();
             let key_array = RArray::new();
@@ -164,7 +164,7 @@ impl Task {
 
     // TODO: Mutation methods will need Operations parameter
     // These are placeholders that return NotImplementedError until Operations is fully implemented
-    
+
     fn set_status(&self, _status: Symbol, _operations: Value) -> Result<(), Error> {
         Err(Error::new(
             magnus::exception::not_imp_error(),
@@ -205,7 +205,7 @@ impl From<TCTask> for Task {
 
 pub fn init(module: &RModule) -> Result<(), Error> {
     let class = module.define_class("Task", class::object())?;
-    
+
     // Property methods (Ruby idiomatic - no get_ prefix)
     class.define_method("inspect", method!(Task::inspect, 0))?;
     class.define_method("uuid", method!(Task::uuid, 0))?;
@@ -217,7 +217,7 @@ pub fn init(module: &RModule) -> Result<(), Error> {
     class.define_method("modified", method!(Task::modified, 0))?;
     class.define_method("due", method!(Task::due, 0))?;
     class.define_method("dependencies", method!(Task::dependencies, 0))?;
-    
+
     // Boolean methods with ? suffix
     class.define_method("waiting?", method!(Task::waiting, 0))?;
     class.define_method("active?", method!(Task::active, 0))?;
@@ -226,22 +226,22 @@ pub fn init(module: &RModule) -> Result<(), Error> {
     class.define_method("completed?", method!(Task::completed, 0))?;
     class.define_method("deleted?", method!(Task::deleted, 0))?;
     class.define_method("pending?", method!(Task::pending, 0))?;
-    
+
     // Tag methods
     class.define_method("has_tag?", method!(Task::has_tag, 1))?;
     class.define_method("tags", method!(Task::tags, 0))?;
     class.define_method("annotations", method!(Task::annotations, 0))?;
-    
+
     // Value access
     class.define_method("get_value", method!(Task::get_value, 1))?;
     class.define_method("get_uda", method!(Task::get_uda, 2))?;
     class.define_method("udas", method!(Task::udas, 0))?;
-    
+
     // Mutation methods (placeholders)
     class.define_method("set_status", method!(Task::set_status, 2))?;
     class.define_method("set_description", method!(Task::set_description, 2))?;
     class.define_method("add_tag", method!(Task::add_tag, 2))?;
     class.define_method("remove_tag", method!(Task::remove_tag, 2))?;
-    
+
     Ok(())
 }

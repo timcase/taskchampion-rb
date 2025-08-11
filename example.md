@@ -34,10 +34,10 @@ class TaskManager
   def add_task(description)
     operations = Taskchampion::Operations.new
     uuid = SecureRandom.uuid
-    
+
     task = @replica.create_task(uuid, operations)
     @replica.commit_operations(operations)
-    
+
     puts "✅ Added task: #{description} (#{uuid[0..7]})"
     task
   end
@@ -59,7 +59,7 @@ end
 # Usage
 tm = TaskManager.new
 tm.add_task("Buy groceries")
-tm.add_task("Write documentation") 
+tm.add_task("Write documentation")
 tm.add_task("Review pull requests")
 tm.list_tasks
 puts "Total tasks: #{tm.task_count}"
@@ -108,11 +108,11 @@ puts task_summary(replica, uuid)
 # Status management
 def mark_completed(replica, uuid)
   operations = Taskchampion::Operations.new
-  
-  # Note: Task mutation methods not yet implemented, 
+
+  # Note: Task mutation methods not yet implemented,
   # but this shows the intended workflow
   puts "Task #{uuid[0..7]} would be marked as completed"
-  
+
   # When implemented, would be:
   # task = replica.task(uuid)
   # task.set_status(Taskchampion::Status.completed, operations)
@@ -123,7 +123,7 @@ end
 def show_operations_info(operations)
   puts "Operations count: #{operations.length}"
   puts "Empty? #{operations.empty?}"
-  
+
   operations.each do |op|
     type = case
       when op.create? then "CREATE"
@@ -158,17 +158,17 @@ puts "Read only? #{read_only.read_only?}" # => true
 def show_task_organization(replica)
   working_set = replica.working_set
   dep_map = replica.dependency_map
-  
+
   puts "📊 Task Organization:"
   puts "Largest index: #{working_set.largest_index}"
-  
+
   # Show tasks by index
   (1..working_set.largest_index).each do |index|
     uuid = working_set.by_index(index)
     if uuid
       task = replica.task(uuid)
       deps = dep_map.dependencies(uuid)
-      
+
       dep_info = deps.empty? ? "" : " (depends on #{deps.length} tasks)"
       puts "#{index}. #{task.description}#{dep_info}"
     end
@@ -178,10 +178,10 @@ end
 # Working with dependencies
 def analyze_dependencies(replica, uuid)
   dep_map = replica.dependency_map
-  
+
   dependencies = dep_map.dependencies(uuid)
   dependents = dep_map.dependents(uuid)
-  
+
   puts "Task #{uuid[0..7]}:"
   puts "  Depends on: #{dependencies.length} tasks"
   puts "  Blocks: #{dependents.length} tasks"
@@ -209,7 +209,7 @@ end
 # Thread safety demonstration
 def demonstrate_thread_safety
   replica = Taskchampion::Replica.new_in_memory
-  
+
   Thread.new do
     begin
       replica.task_uuids  # This will raise ThreadError
@@ -222,30 +222,30 @@ end
 # Operations manipulation
 def demonstrate_operations
   operations = Taskchampion::Operations.new
-  
+
   # Create some operations
   uuid1 = SecureRandom.uuid
   uuid2 = SecureRandom.uuid
-  
+
   op1 = Taskchampion::Operation.create(uuid1)
   op2 = Taskchampion::Operation.create(uuid2)
-  
+
   # Add operations
   operations.push(op1)
   operations << op2        # Same as push
-  
+
   puts "Operations count: #{operations.length}"
   puts "Operations: #{operations.inspect}"
-  
+
   # Iterate operations
   operations.each do |op|
     puts "Operation type: #{op.create? ? 'CREATE' : 'OTHER'}"
   end
-  
+
   # Convert to array
   ops_array = operations.to_a
   puts "Array length: #{ops_array.length}"
-  
+
   # Clear operations
   operations.clear
   puts "After clear: #{operations.empty?}"
@@ -262,7 +262,7 @@ require 'securerandom'
 class SimpleTasks
   def initialize
     @replica = Taskchampion::Replica.new_on_disk(
-      File.expand_path("~/.simple_tasks"), 
+      File.expand_path("~/.simple_tasks"),
       true
     )
   end
@@ -270,10 +270,10 @@ class SimpleTasks
   def add(description)
     operations = Taskchampion::Operations.new
     uuid = SecureRandom.uuid
-    
+
     task = @replica.create_task(uuid, operations)
     @replica.commit_operations(operations)
-    
+
     puts "Added: #{description} [#{uuid[0..7]}]"
   end
 
@@ -294,7 +294,7 @@ class SimpleTasks
   def stats
     count = @replica.task_uuids.length
     working_set = @replica.working_set
-    
+
     puts "\n📊 Stats:"
     puts "Total tasks: #{count}"
     puts "Largest index: #{working_set.largest_index}"
@@ -309,7 +309,7 @@ class SimpleTasks
 
     uuid = uuids[index - 1]
     task = @replica.task(uuid)
-    
+
     puts "\n📋 Task Details:"
     puts "UUID: #{task.uuid}"
     puts "Description: #{task.description}"
@@ -322,10 +322,10 @@ class SimpleTasks
     puts "Waiting: #{task.waiting?}"
     puts "Blocked: #{task.blocked?}"
     puts "Blocking others: #{task.blocking?}"
-    
+
     deps = task.dependencies
     puts "Dependencies: #{deps.empty? ? 'None' : deps.join(', ')}"
-    
+
     tags = task.tags
     puts "Tags: #{tags.empty? ? 'None' : tags.map(&:to_s).join(', ')}"
   end

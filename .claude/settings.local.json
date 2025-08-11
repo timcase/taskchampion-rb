@@ -3,7 +3,10 @@
     "allow": [
       "Bash(bundle exec rake:*)",
       "mcp__zen__chat",
-      "mcp__zen__thinkdeep"
+      "mcp__zen__thinkdeep",
+      "WebFetch(domain:github.com)",
+      "WebFetch(domain:docs.taskwarrior.org)",
+      "Bash(chmod:*)"
     ],
     "deny": []
   }
