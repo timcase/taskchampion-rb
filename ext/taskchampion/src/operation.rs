@@ -64,6 +64,15 @@ impl Operation {
         matches!(self.0, TCOperation::UndoPoint)
     }
 
+    fn operation_type(&self) -> magnus::Symbol {
+        match &self.0 {
+            TCOperation::Create { .. } => magnus::Symbol::new("create"),
+            TCOperation::Delete { .. } => magnus::Symbol::new("delete"),
+            TCOperation::Update { .. } => magnus::Symbol::new("update"),
+            TCOperation::UndoPoint => magnus::Symbol::new("undo_point"),
+        }
+    }
+
     // Getters for each variant
     fn uuid(&self) -> Result<String, Error> {
         match &self.0 {
@@ -139,6 +148,29 @@ impl Operation {
         }
     }
 
+    fn to_s(&self) -> String {
+        match &self.0 {
+            TCOperation::Create { uuid } => {
+                format!("Create task {}", uuid)
+            }
+            TCOperation::Delete { uuid, .. } => {
+                format!("Delete task {}", uuid)
+            }
+            TCOperation::Update { uuid, property, value, old_value, .. } => {
+                let value_desc = match (old_value, value) {
+                    (Some(old), Some(new)) => format!("from '{}' to '{}'", old, new),
+                    (Some(old), None) => format!("from '{}' to nil", old),
+                    (None, Some(new)) => format!("to '{}'", new),
+                    (None, None) => "to nil".to_string(),
+                };
+                format!("Update task {} property '{}' {}", uuid, property, value_desc)
+            }
+            TCOperation::UndoPoint => {
+                "Undo point".to_string()
+            }
+        }
+    }
+
     fn inspect(&self) -> String {
         match &self.0 {
             TCOperation::Create { uuid } => {
@@ -189,6 +221,7 @@ pub fn init(module: &RModule) -> Result<(), Error> {
     class.define_method("delete?", method!(Operation::delete_op, 0))?;
     class.define_method("update?", method!(Operation::update_op, 0))?;
     class.define_method("undo_point?", method!(Operation::undo_point_op, 0))?;
+    class.define_method("operation_type", method!(Operation::operation_type, 0))?;
     
     // Getter methods
     class.define_method("uuid", method!(Operation::uuid, 0))?;
@@ -197,6 +230,7 @@ pub fn init(module: &RModule) -> Result<(), Error> {
     class.define_method("timestamp", method!(Operation::timestamp, 0))?;
     class.define_method("old_value", method!(Operation::old_value, 0))?;
     class.define_method("value", method!(Operation::value, 0))?;
+    class.define_method("to_s", method!(Operation::to_s, 0))?;
     class.define_method("inspect", method!(Operation::inspect, 0))?;
     
     Ok(())
