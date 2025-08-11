@@ -162,35 +162,82 @@ impl Task {
         })
     }
 
-    // TODO: Mutation methods will need Operations parameter
-    // These are placeholders that return NotImplementedError until Operations is fully implemented
-
-    fn set_status(&self, _status: Symbol, _operations: Value) -> Result<(), Error> {
-        Err(Error::new(
-            magnus::exception::not_imp_error(),
-            "Task mutation requires Operations class to be implemented",
-        ))
+    // Mutation methods that require Operations parameter
+    fn set_description(&self, description: String, operations: &crate::operations::Operations) -> Result<(), Error> {
+        let mut task = self.0.get()?;
+        let ops = &mut operations.clone_inner();
+        task.set_description(ops, description)
+            .map_err(into_error)
     }
 
-    fn set_description(&self, _description: String, _operations: Value) -> Result<(), Error> {
-        Err(Error::new(
-            magnus::exception::not_imp_error(),
-            "Task mutation requires Operations class to be implemented",
-        ))
+    fn set_status(&self, status: Symbol, operations: &crate::operations::Operations) -> Result<(), Error> {
+        let mut task = self.0.get()?;
+        let status = Status::from_symbol(status)?;
+        let ops = &mut operations.clone_inner();
+        task.set_status(ops, status.into())
+            .map_err(into_error)
     }
 
-    fn add_tag(&self, _tag: &Tag, _operations: Value) -> Result<(), Error> {
-        Err(Error::new(
-            magnus::exception::not_imp_error(),
-            "Task mutation requires Operations class to be implemented",
-        ))
+    fn set_priority(&self, priority: String, operations: &crate::operations::Operations) -> Result<(), Error> {
+        let mut task = self.0.get()?;
+        let ops = &mut operations.clone_inner();
+        task.set_priority(ops, &priority)
+            .map_err(into_error)
     }
 
-    fn remove_tag(&self, _tag: &Tag, _operations: Value) -> Result<(), Error> {
-        Err(Error::new(
-            magnus::exception::not_imp_error(),
-            "Task mutation requires Operations class to be implemented",
-        ))
+    fn add_tag(&self, tag: &Tag, operations: &crate::operations::Operations) -> Result<(), Error> {
+        let mut task = self.0.get()?;
+        let ops = &mut operations.clone_inner();
+        task.add_tag(ops, tag.as_ref())
+            .map_err(into_error)
+    }
+
+    fn remove_tag(&self, tag: &Tag, operations: &crate::operations::Operations) -> Result<(), Error> {
+        let mut task = self.0.get()?;
+        let ops = &mut operations.clone_inner();
+        task.remove_tag(ops, tag.as_ref())
+            .map_err(into_error)
+    }
+
+    fn add_annotation(&self, description: String, operations: &crate::operations::Operations) -> Result<(), Error> {
+        let mut task = self.0.get()?;
+        let ops = &mut operations.clone_inner();
+        task.add_annotation(ops, description)
+            .map_err(into_error)
+    }
+
+    fn set_due(&self, due: Value, operations: &crate::operations::Operations) -> Result<(), Error> {
+        let mut task = self.0.get()?;
+        let ops = &mut operations.clone_inner();
+        let due_datetime = ruby_to_option(due, ruby_to_datetime)?;
+        task.set_due(ops, due_datetime)
+            .map_err(into_error)
+    }
+
+    fn set_value(&self, property: String, value: Value, operations: &crate::operations::Operations) -> Result<(), Error> {
+        let mut task = self.0.get()?;
+        let ops = &mut operations.clone_inner();
+        let value_str = if value.is_nil() {
+            None
+        } else {
+            Some(value.to_string())
+        };
+        task.set_value(ops, &property, value_str)
+            .map_err(into_error)
+    }
+
+    fn set_uda(&self, namespace: String, key: String, value: String, operations: &crate::operations::Operations) -> Result<(), Error> {
+        let mut task = self.0.get()?;
+        let ops = &mut operations.clone_inner();
+        task.set_uda(ops, &namespace, &key, &value)
+            .map_err(into_error)
+    }
+
+    fn delete_uda(&self, namespace: String, key: String, operations: &crate::operations::Operations) -> Result<(), Error> {
+        let mut task = self.0.get()?;
+        let ops = &mut operations.clone_inner();
+        task.remove_uda(ops, &namespace, &key)
+            .map_err(into_error)
     }
 }
 
@@ -237,11 +284,17 @@ pub fn init(module: &RModule) -> Result<(), Error> {
     class.define_method("get_uda", method!(Task::get_uda, 2))?;
     class.define_method("udas", method!(Task::udas, 0))?;
 
-    // Mutation methods (placeholders)
-    class.define_method("set_status", method!(Task::set_status, 2))?;
+    // Mutation methods
     class.define_method("set_description", method!(Task::set_description, 2))?;
+    class.define_method("set_status", method!(Task::set_status, 2))?;
+    class.define_method("set_priority", method!(Task::set_priority, 2))?;
     class.define_method("add_tag", method!(Task::add_tag, 2))?;
     class.define_method("remove_tag", method!(Task::remove_tag, 2))?;
+    class.define_method("add_annotation", method!(Task::add_annotation, 2))?;
+    class.define_method("set_due", method!(Task::set_due, 2))?;
+    class.define_method("set_value", method!(Task::set_value, 3))?;
+    class.define_method("set_uda", method!(Task::set_uda, 4))?;
+    class.define_method("delete_uda", method!(Task::delete_uda, 3))?;
 
     Ok(())
 }
