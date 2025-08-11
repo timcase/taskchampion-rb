@@ -239,6 +239,20 @@ impl Task {
         task.remove_uda(ops, &namespace, &key)
             .map_err(into_error)
     }
+
+    // Ruby-style setter methods (convenience wrappers)
+    // Note: These require an Operations object to be passed to the Ruby method
+    fn set_description_eq(&self, description: String, operations: &crate::operations::Operations) -> Result<(), Error> {
+        self.set_description(description, operations)
+    }
+
+    fn set_status_eq(&self, status: Symbol, operations: &crate::operations::Operations) -> Result<(), Error> {
+        self.set_status(status, operations)
+    }
+
+    fn set_priority_eq(&self, priority: String, operations: &crate::operations::Operations) -> Result<(), Error> {
+        self.set_priority(priority, operations)
+    }
 }
 
 // Remove AsRef implementation as it doesn't work well with thread bounds
@@ -279,9 +293,11 @@ pub fn init(module: &RModule) -> Result<(), Error> {
     class.define_method("tags", method!(Task::tags, 0))?;
     class.define_method("annotations", method!(Task::annotations, 0))?;
 
-    // Value access
-    class.define_method("get_value", method!(Task::get_value, 1))?;
-    class.define_method("get_uda", method!(Task::get_uda, 2))?;
+    // Value access - Ruby convention: no get_ prefix
+    class.define_method("value", method!(Task::get_value, 1))?;
+    class.define_method("get_value", method!(Task::get_value, 1))?;  // Keep for backward compatibility
+    class.define_method("uda", method!(Task::get_uda, 2))?;
+    class.define_method("get_uda", method!(Task::get_uda, 2))?;    // Keep for backward compatibility
     class.define_method("udas", method!(Task::udas, 0))?;
 
     // Mutation methods
@@ -295,6 +311,11 @@ pub fn init(module: &RModule) -> Result<(), Error> {
     class.define_method("set_value", method!(Task::set_value, 3))?;
     class.define_method("set_uda", method!(Task::set_uda, 4))?;
     class.define_method("delete_uda", method!(Task::delete_uda, 3))?;
+
+    // Ruby-style setter methods (require operations parameter)
+    class.define_method("description=", method!(Task::set_description_eq, 2))?;
+    class.define_method("status=", method!(Task::set_status_eq, 2))?;
+    class.define_method("priority=", method!(Task::set_priority_eq, 2))?;
 
     Ok(())
 }
