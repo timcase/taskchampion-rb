@@ -164,6 +164,13 @@ impl Task {
 
     // Mutation methods that require Operations parameter
     fn set_description(&self, description: String, operations: &crate::operations::Operations) -> Result<(), Error> {
+        if description.trim().is_empty() {
+            return Err(Error::new(
+                crate::error::validation_error(),
+                "Description cannot be empty or whitespace-only"
+            ));
+        }
+        
         let mut task = self.0.get()?;
         let ops = &mut operations.clone_inner();
         task.set_description(ops, description)
@@ -179,6 +186,13 @@ impl Task {
     }
 
     fn set_priority(&self, priority: String, operations: &crate::operations::Operations) -> Result<(), Error> {
+        if priority.trim().is_empty() {
+            return Err(Error::new(
+                crate::error::validation_error(),
+                "Priority cannot be empty or whitespace-only"
+            ));
+        }
+        
         let mut task = self.0.get()?;
         let ops = &mut operations.clone_inner();
         task.set_priority(ops, &priority)
@@ -200,6 +214,13 @@ impl Task {
     }
 
     fn add_annotation(&self, description: String, operations: &crate::operations::Operations) -> Result<(), Error> {
+        if description.trim().is_empty() {
+            return Err(Error::new(
+                crate::error::validation_error(),
+                "Annotation description cannot be empty or whitespace-only"
+            ));
+        }
+        
         let mut task = self.0.get()?;
         let ops = &mut operations.clone_inner();
         task.add_annotation(ops, description)
@@ -215,6 +236,13 @@ impl Task {
     }
 
     fn set_value(&self, property: String, value: Value, operations: &crate::operations::Operations) -> Result<(), Error> {
+        if property.trim().is_empty() {
+            return Err(Error::new(
+                crate::error::validation_error(),
+                "Property name cannot be empty or whitespace-only"
+            ));
+        }
+        
         let mut task = self.0.get()?;
         let ops = &mut operations.clone_inner();
         let value_str = if value.is_nil() {
@@ -227,6 +255,19 @@ impl Task {
     }
 
     fn set_uda(&self, namespace: String, key: String, value: String, operations: &crate::operations::Operations) -> Result<(), Error> {
+        if namespace.trim().is_empty() {
+            return Err(Error::new(
+                crate::error::validation_error(),
+                "UDA namespace cannot be empty or whitespace-only"
+            ));
+        }
+        if key.trim().is_empty() {
+            return Err(Error::new(
+                crate::error::validation_error(),
+                "UDA key cannot be empty or whitespace-only"
+            ));
+        }
+        
         let mut task = self.0.get()?;
         let ops = &mut operations.clone_inner();
         task.set_uda(ops, &namespace, &key, &value)
@@ -234,6 +275,19 @@ impl Task {
     }
 
     fn delete_uda(&self, namespace: String, key: String, operations: &crate::operations::Operations) -> Result<(), Error> {
+        if namespace.trim().is_empty() {
+            return Err(Error::new(
+                crate::error::validation_error(),
+                "UDA namespace cannot be empty or whitespace-only"
+            ));
+        }
+        if key.trim().is_empty() {
+            return Err(Error::new(
+                crate::error::validation_error(),
+                "UDA key cannot be empty or whitespace-only"
+            ));
+        }
+        
         let mut task = self.0.get()?;
         let ops = &mut operations.clone_inner();
         task.remove_uda(ops, &namespace, &key)

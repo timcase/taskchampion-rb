@@ -1,5 +1,6 @@
 use magnus::{class, function, method, prelude::*, Error, RModule, Symbol, Value};
 pub use taskchampion::Status as TCStatus;
+use crate::error::validation_error;
 
 #[magnus::wrap(class = "Taskchampion::Status", free_immediately)]
 #[derive(Clone, Copy, PartialEq)]
@@ -92,15 +93,16 @@ impl Status {
 
     // For internal use
     pub fn from_symbol(sym: Symbol) -> Result<Self, Error> {
-        match sym.to_string().as_str() {
+        let sym_str = sym.to_string();
+        match sym_str.as_str() {
             "pending" => Ok(Status(StatusKind::Pending)),
             "completed" => Ok(Status(StatusKind::Completed)),
             "deleted" => Ok(Status(StatusKind::Deleted)),
             "recurring" => Ok(Status(StatusKind::Recurring)),
             "unknown" => Ok(Status(StatusKind::Unknown)),
             _ => Err(Error::new(
-                magnus::exception::arg_error(),
-                "Invalid status, expected :pending, :completed, :deleted, :recurring, or :unknown",
+                validation_error(),
+                format!("Invalid status: :{} - Expected one of: :pending, :completed, :deleted, :recurring, :unknown", sym_str),
             )),
         }
     }
