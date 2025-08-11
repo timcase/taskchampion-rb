@@ -5,7 +5,7 @@ pub use taskchampion::Status as TCStatus;
 #[derive(Clone, Copy, PartialEq)]
 pub struct Status(StatusKind);
 
-#[derive(Clone, Copy, PartialEq)]
+#[derive(Clone, Copy, PartialEq, Hash)]
 enum StatusKind {
     Pending,
     Completed,
@@ -75,6 +75,19 @@ impl Status {
     // Equality
     fn eq(&self, other: &Status) -> bool {
         self.0 == other.0
+    }
+
+    fn eql(&self, other: &Status) -> bool {
+        self.0 == other.0
+    }
+
+    fn hash(&self) -> u64 {
+        use std::collections::hash_map::DefaultHasher;
+        use std::hash::{Hash, Hasher};
+        
+        let mut hasher = DefaultHasher::new();
+        std::mem::discriminant(&self.0).hash(&mut hasher);
+        hasher.finish()
     }
 
     // For internal use
@@ -150,6 +163,8 @@ pub fn init(module: &RModule) -> Result<(), Error> {
     
     // Equality
     class.define_method("==", method!(Status::eq, 1))?;
+    class.define_method("eql?", method!(Status::eql, 1))?;
+    class.define_method("hash", method!(Status::hash, 0))?;
     
     // Keep the constants for backward compatibility
     module.const_set("PENDING", Symbol::new("pending"))?;

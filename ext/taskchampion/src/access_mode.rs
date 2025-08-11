@@ -5,7 +5,7 @@ pub use taskchampion::storage::AccessMode as TCAccessMode;
 #[derive(Clone, Copy, PartialEq)]
 pub struct AccessMode(AccessModeKind);
 
-#[derive(Clone, Copy, PartialEq)]
+#[derive(Clone, Copy, PartialEq, Hash)]
 enum AccessModeKind {
     ReadOnly,
     ReadWrite,
@@ -45,6 +45,19 @@ impl AccessMode {
     // Equality
     fn eq(&self, other: &AccessMode) -> bool {
         self.0 == other.0
+    }
+
+    fn eql(&self, other: &AccessMode) -> bool {
+        self.0 == other.0
+    }
+
+    fn hash(&self) -> u64 {
+        use std::collections::hash_map::DefaultHasher;
+        use std::hash::{Hash, Hasher};
+        
+        let mut hasher = DefaultHasher::new();
+        std::mem::discriminant(&self.0).hash(&mut hasher);
+        hasher.finish()
     }
 
     // For internal use
@@ -102,6 +115,8 @@ pub fn init(module: &RModule) -> Result<(), Error> {
 
     // Equality
     class.define_method("==", method!(AccessMode::eq, 1))?;
+    class.define_method("eql?", method!(AccessMode::eql, 1))?;
+    class.define_method("hash", method!(AccessMode::hash, 0))?;
 
     // Keep the constants for backward compatibility
     module.const_set("READ_ONLY", Symbol::new("read_only"))?;
