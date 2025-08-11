@@ -41,6 +41,16 @@ impl<T> ThreadBound<T> {
         self.check_thread()?;
         Ok(self.inner.borrow_mut())
     }
+
+    pub fn into_inner(self) -> Result<T, Error> {
+        if self.thread_id != std::thread::current().id() {
+            return Err(Error::new(
+                thread_error(),
+                "Object cannot be extracted from a different thread",
+            ));
+        }
+        Ok(self.inner.into_inner())
+    }
 }
 
 #[macro_export]

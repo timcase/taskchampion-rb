@@ -1,4 +1,4 @@
-use magnus::{class, function, method, prelude::*, Error, RModule, Symbol};
+use magnus::{class, function, method, prelude::*, Error, RModule, Symbol, TryConvert};
 pub use taskchampion::storage::AccessMode as TCAccessMode;
 
 #[magnus::wrap(class = "Taskchampion::AccessMode", free_immediately)]
@@ -42,13 +42,19 @@ impl AccessMode {
         format!("#<Taskchampion::AccessMode:{}>", self.to_s())
     }
 
-    // Equality
-    fn eq(&self, other: &AccessMode) -> bool {
-        self.0 == other.0
+    // Equality - handles any Ruby object type
+    fn eq(&self, other: magnus::Value) -> bool {
+        match <&AccessMode>::try_convert(other) {
+            Ok(other_mode) => self.0 == other_mode.0,
+            Err(_) => false, // Not an AccessMode object, so not equal
+        }
     }
 
-    fn eql(&self, other: &AccessMode) -> bool {
-        self.0 == other.0
+    fn eql(&self, other: magnus::Value) -> bool {
+        match <&AccessMode>::try_convert(other) {
+            Ok(other_mode) => self.0 == other_mode.0,
+            Err(_) => false, // Not an AccessMode object, so not equal
+        }
     }
 
     fn hash(&self) -> u64 {

@@ -1,5 +1,5 @@
 use magnus::{
-    class, method, prelude::*, Error, IntoValue, RArray, RModule, Symbol, Value,
+    class, method, prelude::*, Error, IntoValue, RArray, RModule, Symbol, TryConvert, Value,
 };
 use taskchampion::Task as TCTask;
 
@@ -176,9 +176,21 @@ impl Task {
         Ok(())
     }
 
-    fn set_status(&self, status: Symbol, operations: &crate::operations::Operations) -> Result<(), Error> {
+    fn set_status(&self, status: Value, operations: &crate::operations::Operations) -> Result<(), Error> {
         let mut task = self.0.get_mut()?;
-        let status = Status::from_symbol(status)?;
+        
+        // Handle both Status objects and symbols
+        let status = if let Ok(status_obj) = <&Status>::try_convert(status) {
+            *status_obj // Copy the Status object
+        } else if let Ok(symbol) = Symbol::try_convert(status) {
+            Status::from_symbol(symbol)?
+        } else {
+            return Err(Error::new(
+                crate::error::validation_error(),
+                "Status must be a Taskchampion::Status object or a symbol (:pending, :completed, :deleted, etc.)"
+            ));
+        };
+        
         operations.with_inner_mut(|ops| {
             task.set_status(status.into(), ops)
         })?;

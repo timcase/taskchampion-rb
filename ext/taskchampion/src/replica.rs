@@ -69,7 +69,7 @@ impl Replica {
         let mut tc_replica = self.0.get_mut()?;
         
         // Convert Operations to TaskChampion Operations
-        let tc_operations = operations.clone_inner();
+        let tc_operations = operations.clone_inner()?;
         
         // Commit the operations
         tc_replica.commit_operations(tc_operations).map_err(into_error)?;

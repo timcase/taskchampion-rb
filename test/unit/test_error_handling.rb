@@ -1,4 +1,4 @@
-require_relative 'test_helper'
+require_relative '../test_helper'
 require 'securerandom'
 
 class TestErrorHandling < Minitest::Test
@@ -292,17 +292,14 @@ class TestErrorHandling < Minitest::Test
     end
   end
 
-  # Operations Validation Tests
+  # Operations Validation Tests  
   def test_operations_index_out_of_bounds
     ops = Taskchampion::Operations.new
     
-    assert_raises(IndexError) do
-      ops[0] # Empty operations
-    end
-    
-    assert_raises(IndexError) do
-      ops[100] # Out of bounds
-    end
+    # Ruby-style behavior: return nil for out of bounds instead of raising
+    assert_nil ops[0]  # Empty operations
+    assert_nil ops[100]  # Out of bounds
+    assert_nil ops[-1]   # Negative index on empty
   end
 
   # Status Symbol Creation Tests

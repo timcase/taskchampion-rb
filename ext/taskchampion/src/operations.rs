@@ -5,39 +5,57 @@ use std::cell::RefCell;
 use taskchampion::Operations as TCOperations;
 
 use crate::operation::Operation;
+use crate::thread_check::ThreadBound;
 
 #[magnus::wrap(class = "Taskchampion::Operations", free_immediately)]
-pub struct Operations(RefCell<TCOperations>);
+pub struct Operations(ThreadBound<RefCell<TCOperations>>);
 
 impl Operations {
     fn new(_ruby: &Ruby) -> Self {
-        Operations(RefCell::new(TCOperations::new()))
+        Operations(ThreadBound::new(RefCell::new(TCOperations::new())))
     }
 
     fn push(&self, operation: &Operation) -> Result<(), Error> {
-        self.0.borrow_mut().push(operation.as_ref().clone());
+        let ops = self.0.get()?;
+        ops.borrow_mut().push(operation.as_ref().clone());
         Ok(())
     }
 
-    fn len(&self) -> usize {
-        self.0.borrow().len()
+    fn len(&self) -> Result<usize, Error> {
+        let ops = self.0.get()?;
+        let borrowed = ops.borrow();
+        Ok(borrowed.len())
     }
 
-    fn empty(&self) -> bool {
-        self.0.borrow().is_empty()
+    fn empty(&self) -> Result<bool, Error> {
+        let ops = self.0.get()?;
+        let borrowed = ops.borrow();
+        Ok(borrowed.is_empty())
     }
 
-    fn get(&self, index: usize) -> Result<Operation, Error> {
-        let ops = self.0.borrow();
-        if index >= ops.len() {
-            return Err(Error::new(
-                magnus::exception::index_error(),
-                "Index out of bounds",
-            ));
+    fn get(&self, index: isize) -> Result<Value, Error> {
+        let ops = self.0.get()?;
+        let ops = ops.borrow();
+        let len = ops.len() as isize;
+        
+        // Handle negative indices (Ruby-style)
+        let actual_index = if index < 0 {
+            len + index
+        } else {
+            index
+        };
+        
+        // Check bounds - return nil instead of raising for Ruby compatibility
+        if actual_index < 0 || actual_index >= len {
+            let ruby = magnus::Ruby::get().map_err(|e| Error::new(
+                magnus::exception::runtime_error(),
+                e.to_string(),
+            ))?;
+            return Ok(ruby.qnil().into_value());  // Return nil
         }
         
-        let operation = Operation::from(ops[index].clone());
-        Ok(operation)
+        let operation = Operation::from(ops[actual_index as usize].clone());
+        Ok(operation.into_value())
     }
 
     fn each(&self) -> Result<Value, Error> {
@@ -48,7 +66,8 @@ impl Operations {
         
         // Check if a block was given
         if ruby.block_given() {
-            let ops = self.0.borrow();
+            let ops = self.0.get()?;
+            let ops = ops.borrow();
             let block = ruby.block_proc()?;
             
             for op in ops.iter() {
@@ -67,7 +86,8 @@ impl Operations {
     
     fn to_array(&self) -> Result<Value, Error> {
         let array = RArray::new();
-        let ops = self.0.borrow();
+        let ops = self.0.get()?;
+        let ops = ops.borrow();
         
         for op in ops.iter() {
             let operation = Operation::from(op.clone());
@@ -78,24 +98,30 @@ impl Operations {
         Ok(array.into_value())
     }
 
-    fn inspect(&self) -> String {
-        format!("#<Taskchampion::Operations: {} operations>", self.0.borrow().len())
+    fn inspect(&self) -> Result<String, Error> {
+        let ops = self.0.get()?;
+        Ok(format!("#<Taskchampion::Operations: {} operations>", ops.borrow().len()))
     }
 
-    fn clear(&self) {
-        self.0.borrow_mut().clear();
+    fn clear(&self) -> Result<(), Error> {
+        let ops = self.0.get()?;
+        ops.borrow_mut().clear();
+        Ok(())
     }
 
     // Internal method for accessing the operations
-    pub(crate) fn clone_inner(&self) -> TCOperations {
-        self.0.borrow().clone()
+    pub(crate) fn clone_inner(&self) -> Result<TCOperations, Error> {
+        let ops = self.0.get()?;
+        let borrowed = ops.borrow();
+        Ok(borrowed.clone())
     }
 
     pub(crate) fn with_inner_mut<T, F>(&self, f: F) -> Result<T, Error>
     where
         F: FnOnce(&mut TCOperations) -> Result<T, taskchampion::Error>,
     {
-        let mut ops = self.0.borrow_mut();
+        let ops = self.0.get()?;
+        let mut ops = ops.borrow_mut();
         f(&mut *ops).map_err(|e| Error::new(
             magnus::exception::runtime_error(),
             e.to_string(),
@@ -103,11 +129,13 @@ impl Operations {
     }
 
     // Internal method for pushing operations from TaskChampion
-    pub(crate) fn extend_from_tc(&self, tc_ops: Vec<taskchampion::Operation>) {
-        let mut ops = self.0.borrow_mut();
+    pub(crate) fn extend_from_tc(&self, tc_ops: Vec<taskchampion::Operation>) -> Result<(), Error> {
+        let ops = self.0.get()?;
+        let mut ops = ops.borrow_mut();
         for op in tc_ops {
             ops.push(op);
         }
+        Ok(())
     }
 }
 
@@ -117,13 +145,19 @@ impl Operations {
 
 impl From<TCOperations> for Operations {
     fn from(value: TCOperations) -> Self {
-        Operations(RefCell::new(value))
+        Operations(ThreadBound::new(RefCell::new(value)))
     }
 }
 
 impl From<Operations> for TCOperations {
     fn from(value: Operations) -> Self {
-        value.0.into_inner()
+        // This implementation will panic if called from wrong thread
+        // but that's appropriate for ThreadBound behavior
+        let cell = match value.0.into_inner() {
+            Ok(cell) => cell,
+            Err(_) => panic!("Attempted to extract Operations from wrong thread"),
+        };
+        cell.into_inner()
     }
 }
 

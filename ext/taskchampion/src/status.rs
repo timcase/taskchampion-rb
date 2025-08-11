@@ -1,4 +1,4 @@
-use magnus::{class, function, method, prelude::*, Error, RModule, Symbol};
+use magnus::{class, function, method, prelude::*, Error, RModule, Symbol, TryConvert};
 pub use taskchampion::Status as TCStatus;
 use crate::error::validation_error;
 
@@ -73,13 +73,19 @@ impl Status {
         format!("#<Taskchampion::Status:{}>", self.to_s())
     }
 
-    // Equality
-    fn eq(&self, other: &Status) -> bool {
-        self.0 == other.0
+    // Equality - handles any Ruby object type
+    fn eq(&self, other: magnus::Value) -> bool {
+        match <&Status>::try_convert(other) {
+            Ok(other_status) => self.0 == other_status.0,
+            Err(_) => false, // Not a Status object, so not equal
+        }
     }
 
-    fn eql(&self, other: &Status) -> bool {
-        self.0 == other.0
+    fn eql(&self, other: magnus::Value) -> bool {
+        match <&Status>::try_convert(other) {
+            Ok(other_status) => self.0 == other_status.0,
+            Err(_) => false, // Not a Status object, so not equal
+        }
     }
 
     fn hash(&self) -> u64 {
