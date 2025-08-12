@@ -91,7 +91,7 @@ impl Status {
     fn hash(&self) -> u64 {
         use std::collections::hash_map::DefaultHasher;
         use std::hash::{Hash, Hasher};
-        
+
         let mut hasher = DefaultHasher::new();
         std::mem::discriminant(&self.0).hash(&mut hasher);
         hasher.finish()
@@ -150,7 +150,7 @@ impl From<Status> for TCStatus {
 
 pub fn init(module: &RModule) -> Result<(), Error> {
     let class = module.define_class("Status", class::object())?;
-    
+
     // Constructor methods
     class.define_singleton_method("pending", function!(Status::pending, 0))?;
     class.define_singleton_method("completed", function!(Status::completed, 0))?;
@@ -158,29 +158,29 @@ pub fn init(module: &RModule) -> Result<(), Error> {
     class.define_singleton_method("recurring", function!(Status::recurring, 0))?;
     class.define_singleton_method("unknown", function!(Status::unknown, 0))?;
     class.define_singleton_method("from_symbol", function!(Status::from_symbol, 1))?;
-    
+
     // Predicate methods
     class.define_method("pending?", method!(Status::is_pending, 0))?;
     class.define_method("completed?", method!(Status::is_completed, 0))?;
     class.define_method("deleted?", method!(Status::is_deleted, 0))?;
     class.define_method("recurring?", method!(Status::is_recurring, 0))?;
     class.define_method("unknown?", method!(Status::is_unknown, 0))?;
-    
+
     // String representations
     class.define_method("to_s", method!(Status::to_s, 0))?;
     class.define_method("inspect", method!(Status::inspect, 0))?;
-    
+
     // Equality
     class.define_method("==", method!(Status::eq, 1))?;
     class.define_method("eql?", method!(Status::eql, 1))?;
     class.define_method("hash", method!(Status::hash, 0))?;
-    
+
     // Keep the constants for backward compatibility
     module.const_set("PENDING", Symbol::new("pending"))?;
     module.const_set("COMPLETED", Symbol::new("completed"))?;
     module.const_set("DELETED", Symbol::new("deleted"))?;
     module.const_set("RECURRING", Symbol::new("recurring"))?;
     module.const_set("UNKNOWN", Symbol::new("unknown"))?;
-    
+
     Ok(())
 }

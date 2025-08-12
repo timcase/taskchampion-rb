@@ -53,17 +53,17 @@ pub fn sync_error() -> magnus::ExceptionClass {
 // Enhanced error mapping function with context-aware error types
 pub fn map_taskchampion_error(error: taskchampion::Error) -> Error {
     let error_msg = error.to_string();
-    
+
     // Map TaskChampion errors to appropriate Ruby error types based on error content
-    if error_msg.contains("No such file") || error_msg.contains("Permission denied") || 
+    if error_msg.contains("No such file") || error_msg.contains("Permission denied") ||
        error_msg.contains("storage") || error_msg.contains("database") {
         Error::new(storage_error(), format!("Storage error: {}", error_msg))
-    } else if error_msg.contains("sync") || error_msg.contains("server") || 
+    } else if error_msg.contains("sync") || error_msg.contains("server") ||
               error_msg.contains("network") || error_msg.contains("remote") {
         Error::new(sync_error(), format!("Synchronization error: {}", error_msg))
     } else if error_msg.contains("config") || error_msg.contains("invalid config") {
         Error::new(config_error(), format!("Configuration error: {}", error_msg))
-    } else if error_msg.contains("invalid") || error_msg.contains("parse") || 
+    } else if error_msg.contains("invalid") || error_msg.contains("parse") ||
               error_msg.contains("format") || error_msg.contains("validation") {
         Error::new(validation_error(), format!("Validation error: {}", error_msg))
     } else {

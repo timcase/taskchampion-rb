@@ -9,7 +9,7 @@ pub fn uuid2tc(s: impl AsRef<str>) -> Result<Uuid, Error> {
     let uuid_str = s.as_ref();
     Uuid::parse_str(uuid_str)
         .map_err(|_| Error::new(
-            validation_error(), 
+            validation_error(),
             format!("Invalid UUID format: '{}'. Expected format: xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx", uuid_str)
         ))
 }
@@ -23,7 +23,7 @@ pub fn into_error(err: taskchampion::Error) -> Error {
 pub fn datetime_to_ruby(dt: DateTime<Utc>) -> Result<Value, Error> {
     let ruby = magnus::Ruby::get().map_err(|e| Error::new(magnus::exception::runtime_error(), e.to_string()))?;
     let datetime_class: Value = ruby.eval("require 'date'; DateTime")?;
-    
+
     // Convert to string and parse in Ruby (simplest approach)
     let iso_string = dt.to_rfc3339();
     datetime_class.funcall("parse", (iso_string,))
@@ -32,7 +32,7 @@ pub fn datetime_to_ruby(dt: DateTime<Utc>) -> Result<Value, Error> {
 /// Convert Ruby DateTime/Time/String to Rust DateTime<Utc> with enhanced validation
 pub fn ruby_to_datetime(value: Value) -> Result<DateTime<Utc>, Error> {
     let ruby = magnus::Ruby::get().map_err(|e| Error::new(magnus::exception::runtime_error(), e.to_string()))?;
-    
+
     // If it's a string, parse it
     if let Ok(s) = RString::try_convert(value) {
         let s = unsafe { s.as_str()? };
@@ -41,7 +41,7 @@ pub fn ruby_to_datetime(value: Value) -> Result<DateTime<Utc>, Error> {
             .or_else(|_| DateTime::parse_from_str(s, "%Y-%m-%d %H:%M:%S %z")
                 .map(|dt| dt.with_timezone(&Utc)))
             .map_err(|_| Error::new(
-                validation_error(), 
+                validation_error(),
                 format!("Invalid datetime format: '{}'. Expected ISO 8601 format (e.g., '2023-01-01T12:00:00Z') or '%Y-%m-%d %H:%M:%S %z'", s)
             ))
     } else {
@@ -51,7 +51,7 @@ pub fn ruby_to_datetime(value: Value) -> Result<DateTime<Utc>, Error> {
                 DateTime::parse_from_rfc3339(&iso_string)
                     .map(|dt| dt.with_timezone(&Utc))
                     .map_err(|_| Error::new(
-                        validation_error(), 
+                        validation_error(),
                         format!("Invalid datetime from Ruby object: '{}'. Unable to parse as ISO 8601", iso_string)
                     ))
             }

@@ -60,7 +60,7 @@ impl AccessMode {
     fn hash(&self) -> u64 {
         use std::collections::hash_map::DefaultHasher;
         use std::hash::{Hash, Hasher};
-        
+
         let mut hasher = DefaultHasher::new();
         std::mem::discriminant(&self.0).hash(&mut hasher);
         hasher.finish()

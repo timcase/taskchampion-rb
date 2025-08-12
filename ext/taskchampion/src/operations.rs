@@ -37,14 +37,14 @@ impl Operations {
         let ops = self.0.get()?;
         let ops = ops.borrow();
         let len = ops.len() as isize;
-        
+
         // Handle negative indices (Ruby-style)
         let actual_index = if index < 0 {
             len + index
         } else {
             index
         };
-        
+
         // Check bounds - return nil instead of raising for Ruby compatibility
         if actual_index < 0 || actual_index >= len {
             let ruby = magnus::Ruby::get().map_err(|e| Error::new(
@@ -53,7 +53,7 @@ impl Operations {
             ))?;
             return Ok(ruby.qnil().into_value());  // Return nil
         }
-        
+
         let operation = Operation::from(ops[actual_index as usize].clone());
         Ok(operation.into_value())
     }
@@ -63,18 +63,18 @@ impl Operations {
             magnus::exception::runtime_error(),
             format!("Failed to get Ruby context: {}", e),
         ))?;
-        
+
         // Check if a block was given
         if ruby.block_given() {
             let ops = self.0.get()?;
             let ops = ops.borrow();
             let block = ruby.block_proc()?;
-            
+
             for op in ops.iter() {
                 let operation = Operation::from(op.clone());
                 block.call::<_, Value>((operation,))?;
             }
-            
+
             // Ruby's each method returns self when called with a block
             let ruby = magnus::Ruby::get().unwrap();
             Ok(ruby.qnil().into_value())
@@ -83,18 +83,18 @@ impl Operations {
             self.to_array()
         }
     }
-    
+
     fn to_array(&self) -> Result<Value, Error> {
         let array = RArray::new();
         let ops = self.0.get()?;
         let ops = ops.borrow();
-        
+
         for op in ops.iter() {
             let operation = Operation::from(op.clone());
             // Magnus handles wrapping automatically
             array.push(operation)?;
         }
-        
+
         Ok(array.into_value())
     }
 
@@ -163,7 +163,7 @@ impl From<Operations> for TCOperations {
 
 pub fn init(module: &RModule) -> Result<(), Error> {
     let class = module.define_class("Operations", class::object())?;
-    
+
     class.define_singleton_method("new", function!(Operations::new, 0))?;
     class.define_method("push", method!(Operations::push, 1))?;
     class.define_method("<<", method!(Operations::push, 1))?;
@@ -175,6 +175,6 @@ pub fn init(module: &RModule) -> Result<(), Error> {
     class.define_method("to_a", method!(Operations::to_array, 0))?;
     class.define_method("inspect", method!(Operations::inspect, 0))?;
     class.define_method("clear", method!(Operations::clear, 0))?;
-    
+
     Ok(())
 }

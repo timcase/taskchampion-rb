@@ -31,7 +31,7 @@ impl Tag {
     fn hash(&self) -> i64 {
         use std::collections::hash_map::DefaultHasher;
         use std::hash::{Hash, Hasher};
-        
+
         let mut hasher = DefaultHasher::new();
         self.0.hash(&mut hasher);
         hasher.finish() as i64
@@ -62,7 +62,7 @@ impl From<Tag> for TCTag {
 
 pub fn init(module: &RModule) -> Result<(), Error> {
     let class = module.define_class("Tag", class::object())?;
-    
+
     class.define_singleton_method("new", function!(Tag::new, 1))?;
     class.define_method("to_s", method!(Tag::to_s, 0))?;
     class.define_method("to_str", method!(Tag::to_s, 0))?;
@@ -72,6 +72,6 @@ pub fn init(module: &RModule) -> Result<(), Error> {
     class.define_method("hash", method!(Tag::hash, 0))?;
     class.define_method("eql?", method!(Tag::eql, 1))?;
     class.define_method("==", method!(Tag::eql, 1))?;
-    
+
     Ok(())
 }

@@ -54,7 +54,7 @@ threads = 5.times.map do |i|
     # Each thread creates its own replica
     replica = Taskchampion::Replica.new_on_disk("/path/to/tasks#{i}")
     operations = Taskchampion::Operations.new
-    
+
     # Work with replica in this thread
     uuid = SecureRandom.uuid
     task = replica.create_task(uuid, operations)
@@ -75,7 +75,7 @@ threads = 3.times.map do |i|
   Thread.new do
     # Same database path, different replica instances
     replica = Taskchampion::Replica.new_on_disk("/shared/tasks")
-    
+
     # Each thread works independently
     uuids = replica.task_uuids
     puts "Thread #{i}: Found #{uuids.length} tasks"
@@ -160,20 +160,20 @@ class TaskProcessor
     @db_path = db_path
     @replica = nil
   end
-  
+
   def process_tasks
     # Create replica in worker thread
     @replica ||= Taskchampion::Replica.new_on_disk(@db_path)
-    
+
     # Process tasks in this thread
     @replica.task_uuids.each do |uuid|
       task = @replica.task(uuid)
       process_task(task) if task&.pending?
     end
   end
-  
+
   private
-  
+
   def process_task(task)
     operations = Taskchampion::Operations.new
     # ... modify task ...
@@ -203,11 +203,11 @@ uuid_queue = Queue.new
 # Producer thread
 producer = Thread.new do
   replica = Taskchampion::Replica.new_on_disk("/path/to/tasks")
-  
+
   replica.task_uuids.each do |uuid|
     uuid_queue << uuid
   end
-  
+
   uuid_queue << nil # Signal end
 end
 
@@ -216,7 +216,7 @@ consumers = 3.times.map do
   Thread.new do
     # Each consumer has its own replica
     replica = Taskchampion::Replica.new_on_disk("/path/to/tasks")
-    
+
     while (uuid = uuid_queue.pop)
       task = replica.task(uuid)
       puts "Processing: #{task&.description}" if task
@@ -236,24 +236,24 @@ class TaskController
     # Create replica per request (could be cached per thread)
     replica = Taskchampion::Replica.new_on_disk(db_path)
     task = replica.task(uuid)
-    
+
     if task
       render_task(task)
     else
       render_not_found
     end
   end
-  
+
   def update_task(uuid, params)
     replica = Taskchampion::Replica.new_on_disk(db_path)
     task = replica.task(uuid)
-    
+
     return render_not_found unless task
-    
+
     operations = Taskchampion::Operations.new
     task.set_description(params[:description], operations) if params[:description]
     task.set_priority(params[:priority], operations) if params[:priority]
-    
+
     replica.commit_operations(operations)
     render_task(task)
   end
@@ -278,11 +278,11 @@ class TaskService
   def initialize
     @replica = Taskchampion::Replica.new_on_disk("/path/to/tasks")
   end
-  
+
   def task_count
     @replica.task_uuids.length
   end
-  
+
   def find_task(uuid)
     @replica.task(uuid)
   end
@@ -295,10 +295,10 @@ end
 # Use thread-local storage for replica instances
 class TaskService
   def self.replica
-    Thread.current[:taskchampion_replica] ||= 
+    Thread.current[:taskchampion_replica] ||=
       Taskchampion::Replica.new_on_disk("/path/to/tasks")
   end
-  
+
   def self.task_count
     replica.task_uuids.length
   end
@@ -319,7 +319,7 @@ To test your own code:
 def test_my_thread_safety
   errors = []
   replica = Taskchampion::Replica.new_on_disk("/tmp/test")
-  
+
   threads = 10.times.map do
     Thread.new do
       begin
@@ -331,7 +331,7 @@ def test_my_thread_safety
       end
     end
   end
-  
+
   threads.each(&:join)
   assert errors.empty?, "Thread safety issues: #{errors}"
 end

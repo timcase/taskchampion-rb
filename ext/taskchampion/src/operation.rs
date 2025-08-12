@@ -206,20 +206,20 @@ impl From<Operation> for TCOperation {
 
 pub fn init(module: &RModule) -> Result<(), Error> {
     let class = module.define_class("Operation", class::object())?;
-    
+
     // Class methods for creating operations
     class.define_singleton_method("create", function!(Operation::create, 1))?;
     class.define_singleton_method("delete", function!(Operation::delete, 2))?;
     class.define_singleton_method("update", function!(Operation::update, 5))?;
     class.define_singleton_method("undo_point", function!(Operation::undo_point, 0))?;
-    
+
     // Type checking methods
     class.define_method("create?", method!(Operation::create_op, 0))?;
     class.define_method("delete?", method!(Operation::delete_op, 0))?;
     class.define_method("update?", method!(Operation::update_op, 0))?;
     class.define_method("undo_point?", method!(Operation::undo_point_op, 0))?;
     class.define_method("operation_type", method!(Operation::operation_type, 0))?;
-    
+
     // Getter methods
     class.define_method("uuid", method!(Operation::uuid, 0))?;
     class.define_method("old_task", method!(Operation::old_task, 0))?;
@@ -229,6 +229,6 @@ pub fn init(module: &RModule) -> Result<(), Error> {
     class.define_method("value", method!(Operation::value, 0))?;
     class.define_method("to_s", method!(Operation::to_s, 0))?;
     class.define_method("inspect", method!(Operation::inspect, 0))?;
-    
+
     Ok(())
 }

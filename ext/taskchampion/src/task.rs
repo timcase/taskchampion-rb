@@ -168,7 +168,7 @@ impl Task {
                 "Description cannot be empty or whitespace-only"
             ));
         }
-        
+
         let mut task = self.0.get_mut()?;
         operations.with_inner_mut(|ops| {
             task.set_description(description.clone(), ops)
@@ -178,7 +178,7 @@ impl Task {
 
     fn set_status(&self, status: Value, operations: &crate::operations::Operations) -> Result<(), Error> {
         let mut task = self.0.get_mut()?;
-        
+
         // Handle both Status objects and symbols
         let status = if let Ok(status_obj) = <&Status>::try_convert(status) {
             *status_obj // Copy the Status object
@@ -190,7 +190,7 @@ impl Task {
                 "Status must be a Taskchampion::Status object or a symbol (:pending, :completed, :deleted, etc.)"
             ));
         };
-        
+
         operations.with_inner_mut(|ops| {
             task.set_status(status.into(), ops)
         })?;
@@ -204,7 +204,7 @@ impl Task {
                 "Priority cannot be empty or whitespace-only"
             ));
         }
-        
+
         let mut task = self.0.get_mut()?;
         operations.with_inner_mut(|ops| {
             task.set_priority(priority.clone(), ops)
@@ -235,21 +235,19 @@ impl Task {
                 "Annotation description cannot be empty or whitespace-only"
             ));
         }
-        
+
         let mut task = self.0.get_mut()?;
         use chrono::Utc;
         use std::sync::atomic::{AtomicU64, Ordering};
-        
+
         // Use an atomic counter to ensure unique second-level timestamps
         // TaskChampion appears to truncate sub-second precision in property keys
         static ANNOTATION_COUNTER: AtomicU64 = AtomicU64::new(0);
         let counter = ANNOTATION_COUNTER.fetch_add(1, Ordering::SeqCst);
-        
+
         // Get current time and add second offset to ensure uniqueness at TaskChampion's precision level
         let base_time = Utc::now();
         let now = base_time + chrono::Duration::seconds(counter as i64);
-        
-        
         let annotation = taskchampion::Annotation { entry: now, description: description.clone() };
         operations.with_inner_mut(|ops| {
             task.add_annotation(annotation, ops)
@@ -273,7 +271,7 @@ impl Task {
                 "Property name cannot be empty or whitespace-only"
             ));
         }
-        
+
         let mut task = self.0.get_mut()?;
         let value_str = if value.is_nil() {
             None
@@ -299,7 +297,7 @@ impl Task {
                 "UDA key cannot be empty or whitespace-only"
             ));
         }
-        
+
         let mut task = self.0.get_mut()?;
         operations.with_inner_mut(|ops| {
             task.set_uda(&namespace, &key, &value, ops)
@@ -320,7 +318,7 @@ impl Task {
                 "UDA key cannot be empty or whitespace-only"
             ));
         }
-        
+
         let mut task = self.0.get_mut()?;
         operations.with_inner_mut(|ops| {
             task.remove_uda(&namespace, &key, ops)
@@ -386,7 +384,5 @@ pub fn init(module: &RModule) -> Result<(), Error> {
     class.define_method("set_value", method!(Task::set_value, 3))?;
     class.define_method("set_uda", method!(Task::set_uda, 4))?;
     class.define_method("delete_uda", method!(Task::delete_uda, 3))?;
-
-
     Ok(())
 }

@@ -35,7 +35,7 @@ impl Annotation {
     fn hash(&self) -> i64 {
         use std::collections::hash_map::DefaultHasher;
         use std::hash::{Hash, Hasher};
-        
+
         let mut hasher = DefaultHasher::new();
         self.0.entry.hash(&mut hasher);
         self.0.description.hash(&mut hasher);
@@ -63,7 +63,7 @@ impl From<Annotation> for TCAnnotation {
 
 pub fn init(module: &RModule) -> Result<(), Error> {
     let class = module.define_class("Annotation", class::object())?;
-    
+
     class.define_singleton_method("new", function!(Annotation::new, 2))?;
     class.define_method("entry", method!(Annotation::entry, 0))?;
     class.define_method("description", method!(Annotation::description, 0))?;
@@ -72,6 +72,6 @@ pub fn init(module: &RModule) -> Result<(), Error> {
     class.define_method("eql?", method!(Annotation::eql, 1))?;
     class.define_method("==", method!(Annotation::eql, 1))?;
     class.define_method("hash", method!(Annotation::hash, 0))?;
-    
+
     Ok(())
 }

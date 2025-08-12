@@ -19,14 +19,14 @@ use error::init_errors;
 #[magnus::init]
 fn init(ruby: &Ruby) -> Result<(), Error> {
     let module = ruby.define_module("Taskchampion")?;
-    
+
     // Initialize error classes
     init_errors(&module)?;
-    
+
     // Initialize constants
     access_mode::init(&module)?;
     status::init(&module)?;
-    
+
     // Initialize classes
     tag::init(&module)?;
     annotation::init(&module)?;
@@ -36,6 +36,6 @@ fn init(ruby: &Ruby) -> Result<(), Error> {
     working_set::init(&module)?;
     dependency_map::init(&module)?;
     replica::init(&module)?;
-    
+
     Ok(())
 }

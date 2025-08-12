@@ -12,11 +12,11 @@ class TestErrorHandling < Minitest::Test
     assert_raises(Taskchampion::ValidationError) do
       @replica.task("invalid-uuid")
     end
-    
+
     assert_raises(Taskchampion::ValidationError) do
       @replica.task("123")
     end
-    
+
     assert_raises(Taskchampion::ValidationError) do
       @replica.task("")
     end
@@ -36,14 +36,14 @@ class TestErrorHandling < Minitest::Test
     uuid = SecureRandom.uuid
     task = @replica.create_task(uuid, @operations)
     @replica.commit_operations(@operations)
-    
+
     retrieved = @replica.task(uuid)
     ops = Taskchampion::Operations.new
-    
+
     assert_raises(Taskchampion::ValidationError) do
       retrieved.set_status(:invalid_status, ops)
     end
-    
+
     assert_raises(Taskchampion::ValidationError) do
       retrieved.set_status(:unknown_status, ops)
     end
@@ -53,10 +53,10 @@ class TestErrorHandling < Minitest::Test
     uuid = SecureRandom.uuid
     task = @replica.create_task(uuid, @operations)
     @replica.commit_operations(@operations)
-    
+
     retrieved = @replica.task(uuid)
     ops = Taskchampion::Operations.new
-    
+
     error = assert_raises(Taskchampion::ValidationError) do
       retrieved.set_status(:invalid, ops)
     end
@@ -70,18 +70,18 @@ class TestErrorHandling < Minitest::Test
     uuid = SecureRandom.uuid
     task = @replica.create_task(uuid, @operations)
     @replica.commit_operations(@operations)
-    
+
     retrieved = @replica.task(uuid)
     ops = Taskchampion::Operations.new
-    
+
     assert_raises(Taskchampion::ValidationError) do
       retrieved.set_due("not-a-date", ops)
     end
-    
+
     assert_raises(Taskchampion::ValidationError) do
       retrieved.set_due("2023-13-45", ops)
     end
-    
+
     assert_raises(Taskchampion::ValidationError) do
       retrieved.set_due("yesterday", ops)
     end
@@ -91,10 +91,10 @@ class TestErrorHandling < Minitest::Test
     uuid = SecureRandom.uuid
     task = @replica.create_task(uuid, @operations)
     @replica.commit_operations(@operations)
-    
+
     retrieved = @replica.task(uuid)
     ops = Taskchampion::Operations.new
-    
+
     error = assert_raises(Taskchampion::ValidationError) do
       retrieved.set_due("invalid-date", ops)
     end
@@ -107,16 +107,16 @@ class TestErrorHandling < Minitest::Test
     uuid = SecureRandom.uuid
     task = @replica.create_task(uuid, @operations)
     @replica.commit_operations(@operations)
-    
+
     retrieved = @replica.task(uuid)
     ops = Taskchampion::Operations.new
-    
+
     # These should all work
     retrieved.set_due(Time.now, ops)
     retrieved.set_due(DateTime.now, ops)
     retrieved.set_due("2023-01-01T12:00:00Z", ops)
     retrieved.set_due(nil, ops) # Clear due date
-    
+
     # Should not raise any errors
     @replica.commit_operations(ops)
   end
@@ -126,18 +126,18 @@ class TestErrorHandling < Minitest::Test
     uuid = SecureRandom.uuid
     task = @replica.create_task(uuid, @operations)
     @replica.commit_operations(@operations)
-    
+
     retrieved = @replica.task(uuid)
     ops = Taskchampion::Operations.new
-    
+
     assert_raises(Taskchampion::ValidationError) do
       retrieved.set_description("", ops)
     end
-    
+
     assert_raises(Taskchampion::ValidationError) do
       retrieved.set_description("   ", ops)
     end
-    
+
     assert_raises(Taskchampion::ValidationError) do
       retrieved.set_description("\t\n", ops)
     end
@@ -147,14 +147,14 @@ class TestErrorHandling < Minitest::Test
     uuid = SecureRandom.uuid
     task = @replica.create_task(uuid, @operations)
     @replica.commit_operations(@operations)
-    
+
     retrieved = @replica.task(uuid)
     ops = Taskchampion::Operations.new
-    
+
     assert_raises(Taskchampion::ValidationError) do
       retrieved.set_priority("", ops)
     end
-    
+
     error = assert_raises(Taskchampion::ValidationError) do
       retrieved.set_priority("   ", ops)
     end
@@ -165,14 +165,14 @@ class TestErrorHandling < Minitest::Test
     uuid = SecureRandom.uuid
     task = @replica.create_task(uuid, @operations)
     @replica.commit_operations(@operations)
-    
+
     retrieved = @replica.task(uuid)
     ops = Taskchampion::Operations.new
-    
+
     assert_raises(Taskchampion::ValidationError) do
       retrieved.add_annotation("", ops)
     end
-    
+
     error = assert_raises(Taskchampion::ValidationError) do
       retrieved.add_annotation("   ", ops)
     end
@@ -183,14 +183,14 @@ class TestErrorHandling < Minitest::Test
     uuid = SecureRandom.uuid
     task = @replica.create_task(uuid, @operations)
     @replica.commit_operations(@operations)
-    
+
     retrieved = @replica.task(uuid)
     ops = Taskchampion::Operations.new
-    
+
     assert_raises(Taskchampion::ValidationError) do
       retrieved.set_value("", "value", ops)
     end
-    
+
     error = assert_raises(Taskchampion::ValidationError) do
       retrieved.set_value("   ", "value", ops)
     end
@@ -201,14 +201,14 @@ class TestErrorHandling < Minitest::Test
     uuid = SecureRandom.uuid
     task = @replica.create_task(uuid, @operations)
     @replica.commit_operations(@operations)
-    
+
     retrieved = @replica.task(uuid)
     ops = Taskchampion::Operations.new
-    
+
     assert_raises(Taskchampion::ValidationError) do
       retrieved.set_uda("", "key", "value", ops)
     end
-    
+
     error = assert_raises(Taskchampion::ValidationError) do
       retrieved.set_uda("   ", "key", "value", ops)
     end
@@ -219,14 +219,14 @@ class TestErrorHandling < Minitest::Test
     uuid = SecureRandom.uuid
     task = @replica.create_task(uuid, @operations)
     @replica.commit_operations(@operations)
-    
+
     retrieved = @replica.task(uuid)
     ops = Taskchampion::Operations.new
-    
+
     assert_raises(Taskchampion::ValidationError) do
       retrieved.set_uda("namespace", "", "value", ops)
     end
-    
+
     error = assert_raises(Taskchampion::ValidationError) do
       retrieved.set_uda("namespace", "   ", "value", ops)
     end
@@ -237,14 +237,14 @@ class TestErrorHandling < Minitest::Test
     uuid = SecureRandom.uuid
     task = @replica.create_task(uuid, @operations)
     @replica.commit_operations(@operations)
-    
+
     retrieved = @replica.task(uuid)
     ops = Taskchampion::Operations.new
-    
+
     assert_raises(Taskchampion::ValidationError) do
       retrieved.delete_uda("", "key", ops)
     end
-    
+
     assert_raises(Taskchampion::ValidationError) do
       retrieved.delete_uda("namespace", "", ops)
     end
@@ -258,7 +258,7 @@ class TestErrorHandling < Minitest::Test
     assert Taskchampion::ValidationError < Taskchampion::Error
     assert Taskchampion::ConfigError < Taskchampion::Error
     assert Taskchampion::SyncError < Taskchampion::Error
-    
+
     # Base error should inherit from StandardError
     assert Taskchampion::Error < StandardError
   end
@@ -266,7 +266,7 @@ class TestErrorHandling < Minitest::Test
   def test_thread_error_on_cross_thread_access
     replica = Taskchampion::Replica.new_in_memory
     error = nil
-    
+
     thread = Thread.new do
       begin
         replica.task_uuids
@@ -275,7 +275,7 @@ class TestErrorHandling < Minitest::Test
       end
     end
     thread.join
-    
+
     assert_instance_of Taskchampion::ThreadError, error
     assert_match(/different thread/, error.message)
   end
@@ -285,17 +285,17 @@ class TestErrorHandling < Minitest::Test
     assert_raises(Taskchampion::ValidationError) do
       Taskchampion::Tag.new("")
     end
-    
+
     # Tags with invalid characters should raise
     assert_raises(Taskchampion::ValidationError) do
       Taskchampion::Tag.new("tag with spaces")
     end
   end
 
-  # Operations Validation Tests  
+  # Operations Validation Tests
   def test_operations_index_out_of_bounds
     ops = Taskchampion::Operations.new
-    
+
     # Ruby-style behavior: return nil for out of bounds instead of raising
     assert_nil ops[0]  # Empty operations
     assert_nil ops[100]  # Out of bounds
@@ -314,20 +314,20 @@ class TestErrorHandling < Minitest::Test
     uuid = SecureRandom.uuid
     task = @replica.create_task(uuid, @operations)
     @replica.commit_operations(@operations)
-    
+
     retrieved = @replica.task(uuid)
     ops = Taskchampion::Operations.new
-    
+
     # Empty description with standard setter
     assert_raises(Taskchampion::ValidationError) do
       retrieved.set_description("", ops)
     end
-    
-    # Invalid status with standard setter  
+
+    # Invalid status with standard setter
     assert_raises(Taskchampion::ValidationError) do
       retrieved.set_status(:invalid, ops)
     end
-    
+
     # Empty priority with standard setter
     assert_raises(Taskchampion::ValidationError) do
       retrieved.set_priority("", ops)

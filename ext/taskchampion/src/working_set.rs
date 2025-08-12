@@ -30,12 +30,10 @@ impl WorkingSet {
             None => Ok(().into_value()),
         }
     }
-
-
     fn by_uuid(&self, uuid: String) -> Result<Value, Error> {
         let working_set = self.0.get()?;
         let tc_uuid = crate::util::uuid2tc(&uuid)?;
-        
+
         match working_set.by_uuid(tc_uuid) {
             Some(index) => Ok(index.into_value()),
             None => Ok(().into_value()),
@@ -63,12 +61,12 @@ impl WorkingSet {
 
 pub fn init(module: &RModule) -> Result<(), Error> {
     let class = module.define_class("WorkingSet", class::object())?;
-    
+
     class.define_method("largest_index", method!(WorkingSet::largest_index, 0))?;
     class.define_method("by_index", method!(WorkingSet::by_index, 1))?;
     class.define_method("by_uuid", method!(WorkingSet::by_uuid, 1))?;
     class.define_method("renumber", method!(WorkingSet::renumber, 0))?;
     class.define_method("inspect", method!(WorkingSet::inspect, 0))?;
-    
+
     Ok(())
 }

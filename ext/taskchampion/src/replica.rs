@@ -49,56 +49,56 @@ impl Replica {
     fn create_task(&self, uuid: String, operations: &Operations) -> Result<Value, Error> {
         let mut tc_replica = self.0.get_mut()?;
         let tc_uuid = uuid2tc(&uuid)?;
-        
+
         // Create mutable operations vector for TaskChampion
         let mut tc_ops = vec![];
-        
+
         // Create the task in TaskChampion
         let tc_task = tc_replica.create_task(tc_uuid, &mut tc_ops).map_err(into_error)?;
-        
+
         // Add the resulting operations to the provided Operations object
         operations.extend_from_tc(tc_ops);
-        
+
         // Convert to Ruby Task object
         let task = Task::from_tc_task(tc_task);
-        
+
         Ok(task.into_value())
     }
 
     fn commit_operations(&self, operations: &Operations) -> Result<(), Error> {
         let mut tc_replica = self.0.get_mut()?;
-        
+
         // Convert Operations to TaskChampion Operations
         let tc_operations = operations.clone_inner()?;
-        
+
         // Commit the operations
         tc_replica.commit_operations(tc_operations).map_err(into_error)?;
-        
+
         Ok(())
     }
 
     fn tasks(&self) -> Result<RHash, Error> {
         let mut tc_replica = self.0.get_mut()?;
-        
+
         let tasks = tc_replica.all_tasks().map_err(into_error)?;
         let hash = RHash::new();
-        
+
         for (uuid, task) in tasks {
             let ruby_task = Task::from_tc_task(task);
             // Magnus automatically wraps ruby_task as a Taskchampion::Task Ruby object
             hash.aset(uuid.to_string(), ruby_task)?;
         }
-        
+
         Ok(hash)
     }
 
     fn task_data(&self, uuid: String) -> Result<Value, Error> {
         let mut tc_replica = self.0.get_mut()?;
-        
+
         let task_data = tc_replica
             .get_task_data(uuid2tc(&uuid)?)
             .map_err(into_error)?;
-        
+
         option_to_ruby(task_data, |_data| {
             // TODO: Convert task data to Ruby TaskData object
             Ok(().into_value()) // () converts to nil in Magnus
@@ -107,11 +107,11 @@ impl Replica {
 
     fn task(&self, uuid: String) -> Result<Value, Error> {
         let mut tc_replica = self.0.get_mut()?;
-        
+
         let task = tc_replica
             .get_task(uuid2tc(&uuid)?)
             .map_err(into_error)?;
-        
+
         option_to_ruby(task, |task| {
             let ruby_task = Task::from_tc_task(task);
             Ok(ruby_task.into_value()) // Convert to Value
@@ -120,40 +120,40 @@ impl Replica {
 
     fn task_uuids(&self) -> Result<RArray, Error> {
         let mut tc_replica = self.0.get_mut()?;
-        
+
         let uuids = tc_replica.all_task_uuids().map_err(into_error)?;
         vec_to_ruby(uuids, |uuid| Ok(uuid.to_string().into_value()))
     }
 
     fn working_set(&self) -> Result<Value, Error> {
         let mut tc_replica = self.0.get_mut()?;
-        
+
         let tc_working_set = tc_replica.working_set().map_err(into_error)?;
         let working_set = WorkingSet::from_tc_working_set(tc_working_set.into());
-        
+
         Ok(working_set.into_value())
     }
 
     fn dependency_map(&self, force: Option<bool>) -> Result<Value, Error> {
         let mut tc_replica = self.0.get_mut()?;
         let force = force.unwrap_or(false);
-        
+
         let tc_dm = tc_replica.dependency_map(force).map_err(into_error)?;
         let dependency_map = DependencyMap::from_tc_dependency_map(tc_dm);
-        
+
         Ok(dependency_map.into_value())
     }
 
     fn sync_to_local(&self, server_dir: String, avoid_snapshots: Option<bool>) -> Result<(), Error> {
         let mut tc_replica = self.0.get_mut()?;
         let avoid_snapshots = avoid_snapshots.unwrap_or(false);
-        
+
         let mut server = ServerConfig::Local {
             server_dir: server_dir.into(),
         }
         .into_server()
         .map_err(into_error)?;
-        
+
         tc_replica
             .sync(&mut server, avoid_snapshots)
             .map_err(into_error)
@@ -163,7 +163,7 @@ impl Replica {
         &self,
         kwargs: RHash,
     ) -> Result<(), Error> {
-        
+
         // Extract required keyword arguments with proper exception type
         let url: String = kwargs.fetch(Symbol::new("url")).map_err(|_| Error::new(
             magnus::exception::arg_error(),
@@ -182,9 +182,9 @@ impl Replica {
             .ok()
             .and_then(|v| bool::try_convert(v).ok())
             .unwrap_or(false);
-        
+
         let mut tc_replica = self.0.get_mut()?;
-        
+
         let mut server = ServerConfig::Remote {
             url,
             client_id: uuid2tc(&client_id)?,
@@ -192,7 +192,7 @@ impl Replica {
         }
         .into_server()
         .map_err(into_error)?;
-        
+
         tc_replica
             .sync(&mut server, avoid_snapshots)
             .map_err(into_error)
@@ -201,7 +201,7 @@ impl Replica {
     fn rebuild_working_set(&self, renumber: Option<bool>) -> Result<(), Error> {
         let mut tc_replica = self.0.get_mut()?;
         let renumber = renumber.unwrap_or(false);
-        
+
         tc_replica
             .rebuild_working_set(renumber)
             .map_err(into_error)
@@ -209,7 +209,7 @@ impl Replica {
 
     fn expire_tasks(&self) -> Result<(), Error> {
         let mut tc_replica = self.0.get_mut()?;
-        
+
         tc_replica.expire_tasks().map_err(into_error)
     }
 
@@ -232,9 +232,9 @@ impl Replica {
             .ok()
             .and_then(|v| bool::try_convert(v).ok())
             .unwrap_or(false);
-        
+
         let mut tc_replica = self.0.get_mut()?;
-        
+
         let mut server = ServerConfig::Gcp {
             bucket,
             credential_path: credential_path.into(),
@@ -242,7 +242,7 @@ impl Replica {
         }
         .into_server()
         .map_err(into_error)?;
-        
+
         tc_replica
             .sync(&mut server, avoid_snapshots)
             .map_err(into_error)
@@ -250,24 +250,24 @@ impl Replica {
 
     fn num_local_operations(&self) -> Result<usize, Error> {
         let mut tc_replica = self.0.get_mut()?;
-        
+
         Ok(tc_replica.num_local_operations().map_err(into_error)?)
     }
 
     fn num_undo_points(&self) -> Result<usize, Error> {
         let mut tc_replica = self.0.get_mut()?;
-        
+
         Ok(tc_replica.num_undo_points().map_err(into_error)?)
     }
 }
 
 pub fn init(module: &RModule) -> Result<(), Error> {
     let class = module.define_class("Replica", class::object())?;
-    
+
     // Class methods
     class.define_singleton_method("new_on_disk", function!(Replica::new_on_disk, 3))?;
     class.define_singleton_method("new_in_memory", function!(Replica::new_in_memory, 0))?;
-    
+
     // Instance methods
     class.define_method("create_task", method!(Replica::create_task, 2))?;
     class.define_method("commit_operations", method!(Replica::commit_operations, 1))?;
@@ -284,6 +284,6 @@ pub fn init(module: &RModule) -> Result<(), Error> {
     class.define_method("expire_tasks", method!(Replica::expire_tasks, 0))?;
     class.define_method("num_local_operations", method!(Replica::num_local_operations, 0))?;
     class.define_method("num_undo_points", method!(Replica::num_undo_points, 0))?;
-    
+
     Ok(())
 }
