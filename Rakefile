@@ -10,7 +10,7 @@ require "rb_sys/extensiontask"
 
 task build: :compile
 
-GEMSPEC = Gem::Specification.load("taskchampion.gemspec")
+GEMSPEC = Gem::Specification.load("taskchampion-rb.gemspec")
 
 RbSys::ExtensionTask.new("taskchampion", GEMSPEC) do |ext|
   ext.lib_dir = "lib/taskchampion"
