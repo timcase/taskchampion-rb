@@ -18,6 +18,17 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      - name: Configure Windows environment (Windows only)
+        if: runner.os == 'Windows'
+        run: |
+          # Create cargo and rustup directories on same drive as project
+          mkdir -p D:\.cargo
+          mkdir -p D:\.rustup
+          # Configure git to handle Windows paths properly
+          git config --global core.autocrlf input
+          git config --global core.longpaths true
+        shell: bash
+
       - name: Set up Ruby & Rust
         uses: oxidize-rb/actions/setup-ruby-and-rust@v1
         with:
@@ -25,9 +36,20 @@ jobs:
           bundler-cache: true
           cargo-cache: true
           rubygems: latest
+        env:
+          # Fix for Windows cross-drive path issues
+          CARGO_HOME: ${{ runner.os == 'Windows' && 'D:\\.cargo' || '' }}
+          RUSTUP_HOME: ${{ runner.os == 'Windows' && 'D:\\.rustup' || '' }}
 
       - name: Run tests
         run: bundle exec rake test
+        env:
+          # Additional Windows environment variables to fix path issues
+          BUNDLE_PATH: ${{ runner.os == 'Windows' && 'D:/a/taskchampion-rb/taskchampion-rb/vendor/bundle' || '' }}
+          BUNDLE_DEPLOYMENT: ${{ runner.os == 'Windows' && 'false' || '' }}
+          # Ensure cargo uses same drive as project on Windows
+          CARGO_HOME: ${{ runner.os == 'Windows' && 'D:\\.cargo' || '' }}
+          RUSTUP_HOME: ${{ runner.os == 'Windows' && 'D:\\.rustup' || '' }}
 
   lint:
     runs-on: ubuntu-latest

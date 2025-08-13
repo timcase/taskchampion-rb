@@ -11,7 +11,7 @@ crate-type = ["cdylib"]
 
 [dependencies]
 magnus = { version = "0.7", features = ["rb-sys"] }
-rb-sys = "0.9"
+rb-sys = "0.9.103"
 taskchampion = "2.0"
 chrono = "0.4"
 uuid = "1.0"
