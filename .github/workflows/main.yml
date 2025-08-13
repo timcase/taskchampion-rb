@@ -27,6 +27,9 @@ jobs:
           # Configure git to handle Windows paths properly
           git config --global core.autocrlf input
           git config --global core.longpaths true
+          # Check Clang version for debugging
+          echo "Clang version:"
+          clang --version || echo "Clang not found in PATH"
         shell: bash
 
       - name: Set up Ruby & Rust
@@ -50,6 +53,9 @@ jobs:
           # Ensure cargo uses same drive as project on Windows
           CARGO_HOME: ${{ runner.os == 'Windows' && 'D:\\.cargo' || '' }}
           RUSTUP_HOME: ${{ runner.os == 'Windows' && 'D:\\.rustup' || '' }}
+          # Fix bindgen/Clang issues with AVX512 intrinsics on Windows
+          # Disable problematic intrinsics that cause errors with Clang 20
+          BINDGEN_EXTRA_CLANG_ARGS: ${{ runner.os == 'Windows' && '-U__AVX512F__ -U__AVX10_2_512__ -U__AVX10_2__ -U__AMX_AVX512__' || '' }}
 
   lint:
     runs-on: ubuntu-latest
