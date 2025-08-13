@@ -16,5 +16,6 @@ group :development do
 end
 
 group :rubocop do
+  gem "activesupport", "< 8.0" # Keep compatible with Ruby 3.0+
   gem "rubocop-rails-omakase", require: false
 end
