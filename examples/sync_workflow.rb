@@ -231,10 +231,10 @@ begin
     begin
       replica.sync_to_local(server_dir, avoid_snapshots: false)
       puts "  ✓ Post-work sync completed"
-      return true
+      true
     rescue => e
       puts "  ✗ Post-work sync failed: #{e.message}"
-      return false
+      false
     end
   end
 
