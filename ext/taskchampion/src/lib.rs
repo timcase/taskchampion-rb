@@ -8,6 +8,7 @@ mod status;
 mod tag;
 mod annotation;
 mod task;
+mod task_data;
 mod operation;
 mod operations;
 mod replica;
@@ -31,6 +32,7 @@ fn init(ruby: &Ruby) -> Result<(), Error> {
     tag::init(&module)?;
     annotation::init(&module)?;
     task::init(&module)?;
+    task_data::init(&module)?;
     operation::init(&module)?;
     operations::init(&module)?;
     working_set::init(&module)?;

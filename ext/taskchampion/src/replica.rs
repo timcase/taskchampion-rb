@@ -6,6 +6,7 @@ use taskchampion::{Replica as TCReplica, ServerConfig, StorageConfig};
 use crate::access_mode::AccessMode;
 use crate::operations::Operations;
 use crate::task::Task;
+use crate::task_data::TaskData;
 use crate::working_set::WorkingSet;
 use crate::dependency_map::DependencyMap;
 use crate::thread_check::ThreadBound;
@@ -99,9 +100,9 @@ impl Replica {
             .get_task_data(uuid2tc(&uuid)?)
             .map_err(into_error)?;
 
-        option_to_ruby(task_data, |_data| {
-            // TODO: Convert task data to Ruby TaskData object
-            Ok(().into_value()) // () converts to nil in Magnus
+        option_to_ruby(task_data, |data| {
+            let ruby_task_data = TaskData::from_tc_task_data(data);
+            Ok(ruby_task_data.into_value())
         })
     }
 
