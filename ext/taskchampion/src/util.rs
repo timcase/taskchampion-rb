@@ -45,21 +45,34 @@ pub fn ruby_to_datetime(value: Value) -> Result<DateTime<Utc>, Error> {
                 format!("Invalid datetime format: '{}'. Expected ISO 8601 format (e.g., '2023-01-01T12:00:00Z') or '%Y-%m-%d %H:%M:%S %z'", s)
             ))
     } else {
-        // Convert Ruby DateTime/Time to ISO string then parse
-        match value.funcall::<_, (), String>("iso8601", ()) {
-            Ok(iso_string) => {
-                DateTime::parse_from_rfc3339(&iso_string)
-                    .map(|dt| dt.with_timezone(&Utc))
-                    .map_err(|_| Error::new(
-                        validation_error(),
-                        format!("Invalid datetime from Ruby object: '{}'. Unable to parse as ISO 8601", iso_string)
-                    ))
+        // Check if it's a Time object first (Time doesn't have iso8601 method)
+        let class = value.class();
+        let class_name = unsafe { class.name() };
+        let iso_string = if class_name == "Time" {
+            // For Time objects, use strftime to get ISO 8601-like format
+            value.funcall::<_, (&str,), String>("strftime", ("%Y-%m-%dT%H:%M:%S%z",))?
+        } else {
+            // For DateTime objects, use iso8601 method
+            match value.funcall::<_, (), String>("iso8601", ()) {
+                Ok(s) => s,
+                Err(_) => return Err(Error::new(
+                    validation_error(),
+                    format!("Cannot convert value to datetime. Expected Time, DateTime, or String, got: {}", class_name)
+                ))
             }
-            Err(_) => Err(Error::new(
+        };
+        
+        DateTime::parse_from_rfc3339(&iso_string)
+            .map(|dt| dt.with_timezone(&Utc))
+            .or_else(|_| {
+                // Try parsing the Time strftime format (%z gives +HHMM instead of +HH:MM)
+                DateTime::parse_from_str(&iso_string, "%Y-%m-%dT%H:%M:%S%z")
+                    .map(|dt| dt.with_timezone(&Utc))
+            })
+            .map_err(|_| Error::new(
                 validation_error(),
-                format!("Cannot convert value to datetime. Expected Time, DateTime, or String, got: {}", value.class().inspect())
+                format!("Invalid datetime from Ruby object: '{}'. Unable to parse as ISO 8601", iso_string)
             ))
-        }
     }
 }
 
