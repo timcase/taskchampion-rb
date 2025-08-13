@@ -91,7 +91,7 @@ impl Replica {
         Ok(Replica(ThreadBound::new(replica))) // ✅ Wrapped in ThreadBound
     }
 
-    fn tasks(&self) -> Result<RHash, Error> {
+    fn all_tasks(&self) -> Result<RHash, Error> {
         let mut tc_replica = self.0.get_mut()?; // ✅ Thread check + access
         let tasks = tc_replica.all_tasks().map_err(into_error)?;
         // ... process tasks

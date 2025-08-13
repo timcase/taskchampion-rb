@@ -453,7 +453,7 @@ task1.set_status(:pending)
 replica.commit_operations(operations)
 
 # Query tasks
-all_tasks = replica.tasks
+all_tasks = replica.all_tasks
 puts "Total tasks: #{all_tasks.size}"
 
 # Sync with server (if configured)

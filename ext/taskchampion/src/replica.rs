@@ -77,7 +77,7 @@ impl Replica {
         Ok(())
     }
 
-    fn tasks(&self) -> Result<RHash, Error> {
+    fn all_tasks(&self) -> Result<RHash, Error> {
         let mut tc_replica = self.0.get_mut()?;
 
         let tasks = tc_replica.all_tasks().map_err(into_error)?;
@@ -271,7 +271,7 @@ pub fn init(module: &RModule) -> Result<(), Error> {
     // Instance methods
     class.define_method("create_task", method!(Replica::create_task, 2))?;
     class.define_method("commit_operations", method!(Replica::commit_operations, 1))?;
-    class.define_method("tasks", method!(Replica::tasks, 0))?;
+    class.define_method("all_tasks", method!(Replica::all_tasks, 0))?;
     class.define_method("task", method!(Replica::task, 1))?;
     class.define_method("task_data", method!(Replica::task_data, 1))?;
     class.define_method("task_uuids", method!(Replica::task_uuids, 0))?;

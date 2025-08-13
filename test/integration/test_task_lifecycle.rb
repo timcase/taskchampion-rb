@@ -66,7 +66,7 @@ class TestTaskLifecycle < Minitest::Test
     assert_equal uuid, retrieved.uuid
 
     # Check in all tasks
-    all_tasks = @replica.tasks
+    all_tasks = @replica.all_tasks
     assert_instance_of Hash, all_tasks
     assert all_tasks.key?(uuid)
 

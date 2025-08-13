@@ -63,7 +63,7 @@ class TestTask < TaskchampionTest
 
     # Should start with no tasks
     assert_equal [], replica.task_uuids
-    assert_equal({}, replica.tasks)
+    assert_equal({}, replica.all_tasks)
   end
 
   def test_task_class_exists
