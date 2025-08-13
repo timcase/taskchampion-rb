@@ -12,12 +12,9 @@ group :development do
   gem "minitest", "~> 5.0"
   gem "mocha", "~> 2.0"
   gem "yard", "~> 0.9"
-  gem "erb", "< 5.0" # Keep compatible with Ruby 3.1
-  gem "securerandom", "< 0.4" # Keep compatible with Ruby 3.0
   gem "irb"
 end
 
 group :rubocop do
-  gem "activesupport", "< 8.0" # Keep compatible with Ruby 3.0+
   gem "rubocop-rails-omakase", require: false
 end
