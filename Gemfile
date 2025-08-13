@@ -12,6 +12,7 @@ group :development do
   gem "minitest", "~> 5.0"
   gem "mocha", "~> 2.0"
   gem "yard", "~> 0.9"
+  gem "erb", "< 5.0" # Keep compatible with Ruby 3.1
   gem "irb"
 end
 
