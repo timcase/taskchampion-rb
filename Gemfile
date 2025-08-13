@@ -13,6 +13,7 @@ group :development do
   gem "mocha", "~> 2.0"
   gem "yard", "~> 0.9"
   gem "erb", "< 5.0" # Keep compatible with Ruby 3.1
+  gem "securerandom", "< 0.4" # Keep compatible with Ruby 3.0
   gem "irb"
 end
 

@@ -101,7 +101,7 @@ GEM
       rubocop-rails (>= 2.30)
     ruby-progressbar (1.13.0)
     ruby2_keywords (0.0.5)
-    securerandom (0.4.1)
+    securerandom (0.3.2)
     stringio (3.1.7)
     tsort (0.2.0)
     tzinfo (2.0.6)
@@ -125,6 +125,7 @@ DEPENDENCIES
   rake-compiler (~> 1.2)
   rb_sys (~> 0.9)
   rubocop-rails-omakase
+  securerandom (< 0.4)
   taskchampion-rb!
   yard (~> 0.9)
 
