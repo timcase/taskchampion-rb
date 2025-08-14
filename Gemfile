@@ -13,6 +13,7 @@ group :development do
   gem "mocha", "~> 2.0"
   gem "yard", "~> 0.9"
   gem "irb"
+  gem "bump", "~> 0.10"
 end
 
 group :rubocop do
