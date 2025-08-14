@@ -30,13 +30,13 @@ task default: %i[compile test]
 desc "Bump version, create tag, and release gem"
 task :publish, [:version] do |t, args|
   version = args[:version] || "patch"
-  
+
   puts "Bumping version (#{version})..."
   sh "bump #{version} --tag"
-  
+
   puts "Pushing to git..."
   sh "git push && git push --tags"
-  
+
   puts "Building and releasing gem..."
   Rake::Task["release"].invoke
 end

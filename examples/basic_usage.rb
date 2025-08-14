@@ -239,22 +239,22 @@ begin
   # Create a new task to demonstrate TaskData updates
   operations_update = Taskchampion::Operations.new
   update_uuid = SecureRandom.uuid
-  
+
   puts "Creating task for TaskData update demo: #{update_uuid}"
-  
+
   # Create task using TaskData (low-level API)
   task_data = Taskchampion::TaskData.create(update_uuid, operations_update)
-  
+
   # Set initial properties using TaskData
   task_data.update("description", "Task for update demo", operations_update)
   task_data.update("status", "pending", operations_update)
   task_data.update("priority", "L", operations_update) # Low priority
   task_data.update("project", "examples", operations_update)
-  
+
   # Commit initial task
   replica.commit_operations(operations_update)
   puts "Initial task created with TaskData API"
-  
+
   # Retrieve and display initial task
   initial_task_data = replica.task_data(update_uuid)
   if initial_task_data
@@ -263,30 +263,30 @@ begin
       puts "  #{prop}: #{initial_task_data.get(prop)}"
     end
   end
-  
+
   # Update the task with new properties
   update_operations = Taskchampion::Operations.new
   retrieved_task_data = replica.task_data(update_uuid)
-  
+
   if retrieved_task_data
     puts "\nUpdating task properties..."
-    
+
     # Update existing properties
     retrieved_task_data.update("description", "Updated task description", update_operations)
     retrieved_task_data.update("priority", "M", update_operations) # Medium priority
-    
+
     # Add new properties
     retrieved_task_data.update("tags", "example,taskdata,demo", update_operations)
     retrieved_task_data.update("estimate", "2h", update_operations)
     retrieved_task_data.update("modified", Time.now.to_i.to_s, update_operations)
-    
+
     # Remove a property by setting it to nil
     retrieved_task_data.update("project", nil, update_operations)
-    
+
     # Commit updates
     replica.commit_operations(update_operations)
     puts "Task updated successfully"
-    
+
     # Display updated task
     updated_task_data = replica.task_data(update_uuid)
     if updated_task_data
@@ -294,7 +294,7 @@ begin
       updated_task_data.properties.each do |prop|
         puts "  #{prop}: #{updated_task_data.get(prop)}"
       end
-      
+
       puts "Task hash representation:"
       puts "  #{updated_task_data.to_hash}"
     end
@@ -302,23 +302,23 @@ begin
 
   # 11. DELETING TASKS WITH TASKDATA
   puts "\n11. Deleting Tasks with TaskData"
-  
+
   # Create a task specifically for deletion demo
   delete_operations = Taskchampion::Operations.new
   delete_uuid = SecureRandom.uuid
-  
+
   puts "Creating task for deletion demo: #{delete_uuid}"
-  
+
   # Create task to be deleted
   deletable_task_data = Taskchampion::TaskData.create(delete_uuid, delete_operations)
   deletable_task_data.update("description", "Task to be deleted", delete_operations)
   deletable_task_data.update("status", "completed", delete_operations)
   deletable_task_data.update("note", "This task will be deleted", delete_operations)
-  
+
   # Commit the task
   replica.commit_operations(delete_operations)
   puts "Task created for deletion"
-  
+
   # Verify task exists
   before_delete = replica.task_data(delete_uuid)
   if before_delete
@@ -330,19 +330,19 @@ begin
   else
     puts "ERROR: Task not found before deletion"
   end
-  
+
   # Delete the task using TaskData.delete
   final_delete_operations = Taskchampion::Operations.new
   task_to_delete = replica.task_data(delete_uuid)
-  
+
   if task_to_delete
     puts "\nDeleting task..."
     task_to_delete.delete(final_delete_operations)
-    
+
     # Commit the deletion
     replica.commit_operations(final_delete_operations)
     puts "Task deletion committed"
-    
+
     # Verify task is deleted
     after_delete = replica.task_data(delete_uuid)
     if after_delete.nil?
@@ -350,7 +350,7 @@ begin
     else
       puts "✗ Task still exists after deletion attempt"
     end
-    
+
     # Also verify it's not in the task list
     remaining_uuids = replica.task_uuids
     if remaining_uuids.include?(delete_uuid)
@@ -361,7 +361,7 @@ begin
   else
     puts "ERROR: Could not retrieve task for deletion"
   end
-  
+
   # Show difference between task deletion and status update
   puts "\nNote: TaskData.delete() completely removes the task from the database."
   puts "This is different from setting status to 'deleted', which keeps the task"

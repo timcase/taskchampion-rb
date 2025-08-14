@@ -9,7 +9,7 @@ class TestTaskData < TaskchampionTest
     uuid = SecureRandom.uuid
 
     task_data = Taskchampion::TaskData.create(uuid, operations)
-    
+
     assert_instance_of Taskchampion::TaskData, task_data
     assert_equal uuid, task_data.uuid
   end
@@ -20,14 +20,14 @@ class TestTaskData < TaskchampionTest
     uuid = SecureRandom.uuid
 
     task_data = Taskchampion::TaskData.create(uuid, operations)
-    
+
     # Update a property
     task_data.update("description", "Test task", operations)
-    
+
     # Commit operations and retrieve from replica
     replica.commit_operations(operations)
     retrieved_task_data = replica.task_data(uuid)
-    
+
     refute_nil retrieved_task_data
     assert_equal "Test task", retrieved_task_data.get("description")
   end
@@ -41,17 +41,17 @@ class TestTaskData < TaskchampionTest
     task_data = Taskchampion::TaskData.create(uuid, operations)
     task_data.update("description", "Task to delete", operations)
     replica.commit_operations(operations)
-    
+
     # Verify task exists
     retrieved = replica.task_data(uuid)
     refute_nil retrieved
     assert_equal "Task to delete", retrieved.get("description")
-    
+
     # Delete the task
     delete_operations = Taskchampion::Operations.new
     retrieved.delete(delete_operations)
     replica.commit_operations(delete_operations)
-    
+
     # Verify task no longer exists
     deleted_task = replica.task_data(uuid)
     assert_nil deleted_task
@@ -66,23 +66,23 @@ class TestTaskData < TaskchampionTest
     task_data.update("description", "Test task", operations)
     task_data.update("status", "pending", operations)
     task_data.update("priority", "high", operations)
-    
+
     replica.commit_operations(operations)
     retrieved = replica.task_data(uuid)
-    
+
     # Test properties method
     properties = retrieved.properties
     assert_instance_of Array, properties
     assert_includes properties, "description"
     assert_includes properties, "status"
     assert_includes properties, "priority"
-    
+
     # Test has? method
     assert retrieved.has?("description")
-    assert retrieved.has?("status") 
+    assert retrieved.has?("status")
     assert retrieved.has?("priority")
     refute retrieved.has?("nonexistent")
-    
+
     # Test to_hash method
     hash = retrieved.to_hash
     assert_instance_of Hash, hash
@@ -99,7 +99,7 @@ class TestTaskData < TaskchampionTest
     task_data = Taskchampion::TaskData.create(uuid, operations)
     replica.commit_operations(operations)
     retrieved = replica.task_data(uuid)
-    
+
     # Getting nonexistent property should return nil
     assert_nil retrieved.get("nonexistent")
   end
@@ -112,17 +112,17 @@ class TestTaskData < TaskchampionTest
     task_data = Taskchampion::TaskData.create(uuid, operations)
     task_data.update("description", "Initial value", operations)
     replica.commit_operations(operations)
-    
+
     # Verify property exists
     retrieved = replica.task_data(uuid)
     assert_equal "Initial value", retrieved.get("description")
     assert retrieved.has?("description")
-    
+
     # Remove property by setting to nil
     remove_operations = Taskchampion::Operations.new
     retrieved.update("description", nil, remove_operations)
     replica.commit_operations(remove_operations)
-    
+
     # Verify property is removed
     updated = replica.task_data(uuid)
     assert_nil updated.get("description")
@@ -135,7 +135,7 @@ class TestTaskData < TaskchampionTest
     uuid = SecureRandom.uuid
 
     task_data = Taskchampion::TaskData.create(uuid, operations)
-    
+
     inspect_string = task_data.inspect
     assert_match(/Taskchampion::TaskData/, inspect_string)
     assert_match(/#{uuid}/, inspect_string)
