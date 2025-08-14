@@ -61,7 +61,7 @@ pub fn ruby_to_datetime(value: Value) -> Result<DateTime<Utc>, Error> {
                 ))
             }
         };
-        
+
         DateTime::parse_from_rfc3339(&iso_string)
             .map(|dt| dt.with_timezone(&Utc))
             .or_else(|_| {

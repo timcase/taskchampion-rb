@@ -14,8 +14,6 @@ impl TaskData {
     pub fn from_tc_task_data(tc_task_data: TCTaskData) -> Self {
         TaskData(ThreadBound::new(tc_task_data))
     }
-
-
     fn inspect(&self) -> Result<String, Error> {
         let task_data = self.0.get()?;
         Ok(format!("#<Taskchampion::TaskData: {}>", task_data.get_uuid()))
@@ -45,11 +43,11 @@ impl TaskData {
     fn to_hash(&self) -> Result<RHash, Error> {
         let task_data = self.0.get()?;
         let hash = RHash::new();
-        
+
         for (key, value) in task_data.iter() {
             hash.aset(key.clone(), value.clone())?;
         }
-        
+
         Ok(hash)
     }
 
@@ -78,7 +76,7 @@ impl TaskData {
 
     fn delete(&self, operations: &Operations) -> Result<(), Error> {
         let mut task_data = self.0.get_mut()?;
-        
+
         operations.with_inner_mut(|ops| {
             task_data.delete(ops);
             Ok(())
@@ -90,16 +88,16 @@ impl TaskData {
 
 fn create_task_data(uuid: String, operations: &Operations) -> Result<TaskData, Error> {
     let tc_uuid = uuid2tc(&uuid)?;
-    
+
     // Create operations for TaskChampion
     let mut tc_ops = taskchampion::Operations::new();
-    
+
     // Create the TaskData
     let tc_task_data = TCTaskData::create(tc_uuid, &mut tc_ops);
-    
+
     // Add the resulting operations to the provided Operations object
     operations.extend_from_tc(tc_ops.into_iter().collect())?;
-    
+
     Ok(TaskData(ThreadBound::new(tc_task_data)))
 }
 
