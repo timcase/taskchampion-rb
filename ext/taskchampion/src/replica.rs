@@ -260,6 +260,20 @@ impl Replica {
 
         Ok(tc_replica.num_undo_points().map_err(into_error)?)
     }
+
+    fn pending_tasks(&self) -> Result<RArray, Error> {
+        let mut tc_replica = self.0.get_mut()?;
+
+        let tc_tasks = tc_replica.pending_tasks().map_err(into_error)?;
+
+        let array = RArray::new();
+        for tc_task in tc_tasks {
+            let ruby_task = crate::task::Task::from_tc_task(tc_task);
+            array.push(ruby_task)?;
+        }
+
+        Ok(array)
+    }
 }
 
 pub fn init(module: &RModule) -> Result<(), Error> {
@@ -285,6 +299,7 @@ pub fn init(module: &RModule) -> Result<(), Error> {
     class.define_method("expire_tasks", method!(Replica::expire_tasks, 0))?;
     class.define_method("num_local_operations", method!(Replica::num_local_operations, 0))?;
     class.define_method("num_undo_points", method!(Replica::num_undo_points, 0))?;
+    class.define_method("pending_tasks", method!(Replica::pending_tasks, 0))?;
 
     Ok(())
 }
