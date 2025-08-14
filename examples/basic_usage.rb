@@ -18,7 +18,7 @@ db_path = File.join(temp_dir, "tasks")
 begin
   # 1. CREATE TASK DATABASE
   puts "\n1. Creating task database at #{db_path}"
-  replica = Taskchampion::Replica.new_on_disk(db_path, create_if_missing: true)
+  replica = Taskchampion::Replica.new_on_disk(db_path, true, :read_write)
 
   # 2. CREATE AND MODIFY TASKS
   puts "\n2. Creating and modifying tasks"
@@ -39,8 +39,7 @@ begin
   task1.add_tag(Taskchampion::Tag.new("ruby"), operations)
 
   # Add annotation
-  annotation = Taskchampion::Annotation.new(Time.now, "Started learning TaskChampion")
-  task1.add_annotation(annotation, operations)
+  task1.add_annotation("Started learning TaskChampion", operations)
 
   # Create second task
   uuid2 = SecureRandom.uuid
@@ -61,7 +60,6 @@ begin
   task3.set_description("Read TaskChampion documentation", operations)
   task3.set_status(Taskchampion::Status.completed, operations)
   task3.add_tag(Taskchampion::Tag.new("learning"), operations)
-  task3.set_end(Time.now, operations)
 
   # 3. COMMIT CHANGES TO STORAGE
   puts "\n3. Committing changes to storage"
@@ -88,14 +86,13 @@ begin
 
     # Display tags
     if !task.tags.empty?
-      tag_names = task.tags.map(&:name)
+      tag_names = task.tags.map(&:to_s)
       puts "  Tags: #{tag_names.join(', ')}"
     end
 
     # Display dates
     puts "  Created: #{task.entry.strftime('%Y-%m-%d %H:%M:%S')}" if task.entry
     puts "  Due: #{task.due.strftime('%Y-%m-%d %H:%M:%S')}" if task.due
-    puts "  Completed: #{task.end.strftime('%Y-%m-%d %H:%M:%S')}" if task.end
 
     # Display annotations
     if !task.annotations.empty?
@@ -136,29 +133,42 @@ begin
 
   # Find tasks due today or tomorrow
   tomorrow = Time.now + 86400
-  due_soon = all_tasks.select { |t| t.due && t.due <= tomorrow }
+  due_soon = all_tasks.select { |t| t.due && t.due.to_time <= tomorrow }
   puts "Tasks due soon: #{due_soon.length}"
 
   # 6. MODIFY EXISTING TASKS
   puts "\n6. Modifying existing tasks"
 
-  # Complete the first task
+  # Complete the first task using the done method
   operations2 = Taskchampion::Operations.new
 
   # Retrieve task fresh from storage
   task_to_complete = replica.task(uuid1)
   if task_to_complete && task_to_complete.pending?
     puts "Completing task: #{task_to_complete.description}"
-    task_to_complete.set_status(Taskchampion::Status.completed, operations2)
-    task_to_complete.set_end(Time.now, operations2)
+
+    # Use the done() method - a convenience method for marking tasks as completed
+    task_to_complete.done(operations2)
 
     # Add completion annotation
-    completion_note = Taskchampion::Annotation.new(Time.now, "Completed successfully!")
-    task_to_complete.add_annotation(completion_note, operations2)
+    task_to_complete.add_annotation("Completed successfully!", operations2)
 
     # Commit the changes
     replica.commit_operations(operations2)
-    puts "Task completed and committed"
+    puts "Task completed using done() method and committed"
+  end
+
+  # Complete the second task using traditional set_status for comparison
+  operations2b = Taskchampion::Operations.new
+  task_to_complete2 = replica.task(uuid2)
+  if task_to_complete2 && task_to_complete2.pending?
+    puts "Completing second task: #{task_to_complete2.description}"
+
+    # Alternative way: using set_status directly
+    task_to_complete2.set_status(Taskchampion::Status.completed, operations2b)
+
+    replica.commit_operations(operations2b)
+    puts "Task completed using set_status() method and committed"
   end
 
   # 7. WORKING WITH WORKING SET

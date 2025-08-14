@@ -7,7 +7,7 @@ use crate::annotation::Annotation;
 use crate::status::Status;
 use crate::tag::Tag;
 use crate::thread_check::ThreadBound;
-use crate::util::{datetime_to_ruby, into_error, option_to_ruby, ruby_to_datetime, ruby_to_option, vec_to_ruby};
+use crate::util::{datetime_to_ruby, option_to_ruby, ruby_to_datetime, ruby_to_option, vec_to_ruby};
 
 #[magnus::wrap(class = "Taskchampion::Task", free_immediately)]
 pub struct Task(ThreadBound<TCTask>);
@@ -326,6 +326,14 @@ impl Task {
         Ok(())
     }
 
+    fn done(&self, operations: &crate::operations::Operations) -> Result<(), Error> {
+        let mut task = self.0.get_mut()?;
+        operations.with_inner_mut(|ops| {
+            task.done(ops)
+        })?;
+        Ok(())
+    }
+
 }
 
 // Remove AsRef implementation as it doesn't work well with thread bounds
@@ -384,5 +392,6 @@ pub fn init(module: &RModule) -> Result<(), Error> {
     class.define_method("set_value", method!(Task::set_value, 3))?;
     class.define_method("set_uda", method!(Task::set_uda, 4))?;
     class.define_method("delete_uda", method!(Task::delete_uda, 3))?;
+    class.define_method("done", method!(Task::done, 1))?;
     Ok(())
 }

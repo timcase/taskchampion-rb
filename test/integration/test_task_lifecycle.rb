@@ -175,6 +175,30 @@ class TestTaskLifecycle < Minitest::Test
     refute deleted.pending?
   end
 
+  def test_done_method
+    uuid = SecureRandom.uuid
+    task = @replica.create_task(uuid, @operations)
+    task.set_description("Task to complete", @operations)
+    task.set_status(:pending, @operations)
+    @replica.commit_operations(@operations)
+
+    # Verify task is pending
+    retrieved = @replica.task(uuid)
+    assert retrieved.pending?
+    refute retrieved.completed?
+
+    # Mark task as done using the done method
+    ops2 = Taskchampion::Operations.new
+    retrieved.done(ops2)
+    @replica.commit_operations(ops2)
+
+    # Verify task is completed
+    completed_task = @replica.task(uuid)
+    assert completed_task.completed?
+    refute completed_task.pending?
+    assert_equal :completed, completed_task.status
+  end
+
   def test_task_with_dependencies
     # Create parent task
     parent_uuid = SecureRandom.uuid
