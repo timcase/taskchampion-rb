@@ -39,6 +39,7 @@ jobs:
           bundler-cache: true
           cargo-cache: true
           rubygems: latest
+          cache-version: v1-${{ matrix.os }}-${{ matrix.ruby }}
         env:
           # Fix for Windows cross-drive path issues
           CARGO_HOME: ${{ runner.os == 'Windows' && 'D:\\.cargo' || '' }}
