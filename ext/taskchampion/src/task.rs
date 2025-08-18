@@ -264,6 +264,15 @@ impl Task {
         Ok(())
     }
 
+    fn set_entry(&self, entry: Value, operations: &crate::operations::Operations) -> Result<(), Error> {
+        let mut task = self.0.get_mut()?;
+        let entry_datetime = ruby_to_option(entry, ruby_to_datetime)?;
+        operations.with_inner_mut(|ops| {
+            task.set_entry(entry_datetime, ops)
+        })?;
+        Ok(())
+    }
+
     fn set_value(&self, property: String, value: Value, operations: &crate::operations::Operations) -> Result<(), Error> {
         if property.trim().is_empty() {
             return Err(Error::new(
@@ -389,6 +398,7 @@ pub fn init(module: &RModule) -> Result<(), Error> {
     class.define_method("remove_tag", method!(Task::remove_tag, 2))?;
     class.define_method("add_annotation", method!(Task::add_annotation, 2))?;
     class.define_method("set_due", method!(Task::set_due, 2))?;
+    class.define_method("set_entry", method!(Task::set_entry, 2))?;
     class.define_method("set_value", method!(Task::set_value, 3))?;
     class.define_method("set_uda", method!(Task::set_uda, 4))?;
     class.define_method("delete_uda", method!(Task::delete_uda, 3))?;
