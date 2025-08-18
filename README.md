@@ -8,6 +8,7 @@ This gem supports Ruby 3.2 and later. We follow Ruby's end-of-life (EOL) schedul
 
 - **Ruby 3.2**: Supported (EOL: March 2026)
 - **Ruby 3.3**: Supported (Current stable)
+- **Ruby 3.4**: Supported
 - **Ruby 3.0-3.1**: Not supported (reached EOL)
 
 ## Installation
