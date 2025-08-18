@@ -80,26 +80,26 @@ class TestTaskLifecycle < Minitest::Test
     uuid = SecureRandom.uuid
     task = @replica.create_task(uuid, @operations)
     task.set_description("Test entry modification", @operations)
-    
+
     # Set custom entry time
     entry_time = Time.now - 3600 # 1 hour ago
     task.set_entry(entry_time, @operations)
     @replica.commit_operations(@operations)
-    
+
     # Retrieve and verify
     retrieved = @replica.task(uuid)
     retrieved_entry = retrieved.entry
-    
+
     # Should have an entry time that's close to what we set
     refute_nil retrieved_entry
     time_diff = (retrieved_entry.to_time - entry_time).abs
     assert time_diff < 1, "Entry time should be close to what we set (diff: #{time_diff})"
-    
+
     # Test clearing entry
     operations2 = Taskchampion::Operations.new
     retrieved.set_entry(nil, operations2)
     @replica.commit_operations(operations2)
-    
+
     final_task = @replica.task(uuid)
     assert_nil final_task.entry
   end
