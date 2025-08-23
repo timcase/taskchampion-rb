@@ -93,6 +93,20 @@ impl Replica {
         Ok(hash)
     }
 
+    fn pending_tasks(&self) -> Result<RArray, Error> {
+        let mut tc_replica = self.0.get_mut()?;
+
+        let tc_tasks = tc_replica.pending_tasks().map_err(into_error)?;
+
+        let array = RArray::new();
+        for tc_task in tc_tasks {
+            let ruby_task = crate::task::Task::from_tc_task(tc_task);
+            array.push(ruby_task)?;
+        }
+
+        Ok(array)
+    }
+
     fn task_data(&self, uuid: String) -> Result<Value, Error> {
         let mut tc_replica = self.0.get_mut()?;
 
@@ -261,19 +275,6 @@ impl Replica {
         Ok(tc_replica.num_undo_points().map_err(into_error)?)
     }
 
-    fn pending_tasks(&self) -> Result<RArray, Error> {
-        let mut tc_replica = self.0.get_mut()?;
-
-        let tc_tasks = tc_replica.pending_tasks().map_err(into_error)?;
-
-        let array = RArray::new();
-        for tc_task in tc_tasks {
-            let ruby_task = crate::task::Task::from_tc_task(tc_task);
-            array.push(ruby_task)?;
-        }
-
-        Ok(array)
-    }
 }
 
 pub fn init(module: &RModule) -> Result<(), Error> {
