@@ -293,6 +293,53 @@ impl Task {
         Ok(())
     }
 
+    fn set_timestamp(&self, property: String, timestamp: Value, operations: &crate::operations::Operations) -> Result<(), Error> {
+        if property.trim().is_empty() {
+            return Err(Error::new(
+                crate::error::validation_error(),
+                "Property name cannot be empty or whitespace-only"
+            ));
+        }
+
+        let mut task = self.0.get_mut()?;
+        let timestamp_datetime = ruby_to_option(timestamp, ruby_to_datetime)?;
+
+        // Convert timestamp to Unix timestamp string, or None for clearing
+        let timestamp_str = timestamp_datetime.map(|dt| dt.timestamp().to_string());
+
+        operations.with_inner_mut(|ops| {
+            task.set_value(&property, timestamp_str, ops)
+        })?;
+        Ok(())
+    }
+
+    fn get_timestamp(&self, property: String) -> Result<Value, Error> {
+        if property.trim().is_empty() {
+            return Err(Error::new(
+                crate::error::validation_error(),
+                "Property name cannot be empty or whitespace-only"
+            ));
+        }
+
+        let task = self.0.get()?;
+
+        // Get the value as string and attempt to parse as Unix timestamp
+        match task.get_value(&property) {
+            Some(timestamp_str) => {
+                // Parse the string as Unix timestamp (seconds since epoch)
+                if let Ok(timestamp_secs) = timestamp_str.parse::<i64>() {
+                    use chrono::{DateTime, Utc};
+                    if let Some(dt) = DateTime::from_timestamp(timestamp_secs, 0) {
+                        return datetime_to_ruby(dt);
+                    }
+                }
+                // If parsing fails, return nil
+                Ok(().into_value())
+            },
+            None => Ok(().into_value()) // Return nil if property doesn't exist
+        }
+    }
+
     fn set_uda(&self, namespace: String, key: String, value: String, operations: &crate::operations::Operations) -> Result<(), Error> {
         if namespace.trim().is_empty() {
             return Err(Error::new(
@@ -400,6 +447,8 @@ pub fn init(module: &RModule) -> Result<(), Error> {
     class.define_method("set_due", method!(Task::set_due, 2))?;
     class.define_method("set_entry", method!(Task::set_entry, 2))?;
     class.define_method("set_value", method!(Task::set_value, 3))?;
+    class.define_method("set_timestamp", method!(Task::set_timestamp, 3))?;
+    class.define_method("get_timestamp", method!(Task::get_timestamp, 1))?;
     class.define_method("set_uda", method!(Task::set_uda, 4))?;
     class.define_method("delete_uda", method!(Task::delete_uda, 3))?;
     class.define_method("done", method!(Task::done, 1))?;
