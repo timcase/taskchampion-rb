@@ -275,6 +275,37 @@ impl Replica {
         Ok(tc_replica.num_undo_points().map_err(into_error)?)
     }
 
+    fn get_task_operations(&self, uuid: String) -> Result<Value, Error> {
+        let mut tc_replica = self.0.get_mut()?;
+        let tc_uuid = uuid2tc(&uuid)?;
+
+        let tc_operations = tc_replica.get_task_operations(tc_uuid).map_err(into_error)?;
+        let operations = Operations::from_tc_operations(tc_operations);
+
+        Ok(operations.into_value())
+    }
+
+    fn get_undo_operations(&self) -> Result<Value, Error> {
+        let mut tc_replica = self.0.get_mut()?;
+
+        let tc_operations = tc_replica.get_undo_operations().map_err(into_error)?;
+        let operations = Operations::from_tc_operations(tc_operations);
+
+        Ok(operations.into_value())
+    }
+
+    fn commit_reversed_operations(&self, operations: &Operations) -> Result<bool, Error> {
+        let mut tc_replica = self.0.get_mut()?;
+
+        // Convert Operations to TaskChampion Operations
+        let tc_operations = operations.clone_inner()?;
+
+        // Commit the reversed operations
+        let success = tc_replica.commit_reversed_operations(tc_operations).map_err(into_error)?;
+
+        Ok(success)
+    }
+
 }
 
 pub fn init(module: &RModule) -> Result<(), Error> {
@@ -300,6 +331,9 @@ pub fn init(module: &RModule) -> Result<(), Error> {
     class.define_method("expire_tasks", method!(Replica::expire_tasks, 0))?;
     class.define_method("num_local_operations", method!(Replica::num_local_operations, 0))?;
     class.define_method("num_undo_points", method!(Replica::num_undo_points, 0))?;
+    class.define_method("get_task_operations", method!(Replica::get_task_operations, 1))?;
+    class.define_method("get_undo_operations", method!(Replica::get_undo_operations, 0))?;
+    class.define_method("commit_reversed_operations", method!(Replica::commit_reversed_operations, 1))?;
     class.define_method("pending_tasks", method!(Replica::pending_tasks, 0))?;
 
     Ok(())

@@ -37,5 +37,24 @@ module Taskchampion
       ws.replica = self
       ws
     end
+
+    # Ruby-style convenience methods for undo functionality
+    def task_operations(uuid)
+      get_task_operations(uuid)
+    end
+
+    def undo_operations
+      get_undo_operations
+    end
+
+    def commit_undo!(operations)
+      commit_reversed_operations(operations)
+    end
+
+    def undo!
+      ops = undo_operations
+      return false if ops.empty?
+      commit_undo!(ops)
+    end
   end
 end

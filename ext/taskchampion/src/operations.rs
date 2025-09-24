@@ -137,6 +137,15 @@ impl Operations {
         }
         Ok(())
     }
+
+    // Internal method for creating Operations from TaskChampion operations
+    pub(crate) fn from_tc_operations(tc_ops: Vec<taskchampion::Operation>) -> Self {
+        let mut operations = TCOperations::new();
+        for op in tc_ops {
+            operations.push(op);
+        }
+        Operations(ThreadBound::new(RefCell::new(operations)))
+    }
 }
 
 // Note: AsRef and AsMut cannot be implemented with RefCell
