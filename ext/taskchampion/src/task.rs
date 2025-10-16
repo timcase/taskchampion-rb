@@ -255,6 +255,38 @@ impl Task {
         Ok(())
     }
 
+    fn remove_annotation(&self, annotation: &Annotation, operations: &crate::operations::Operations) -> Result<(), Error> {
+        let mut task = self.0.get_mut()?;
+        let entry_timestamp = annotation.as_ref().entry;
+
+        operations.with_inner_mut(|ops| {
+            task.remove_annotation(entry_timestamp, ops)
+        })?;
+        Ok(())
+    }
+
+    fn add_annotation_with_timestamp(&self, timestamp: Value, description: String, operations: &crate::operations::Operations) -> Result<(), Error> {
+        if description.trim().is_empty() {
+            return Err(Error::new(
+                crate::error::validation_error(),
+                "Annotation description cannot be empty or whitespace-only"
+            ));
+        }
+
+        let mut task = self.0.get_mut()?;
+        let entry = ruby_to_datetime(timestamp)?;
+
+        let annotation = taskchampion::Annotation {
+            entry,
+            description,
+        };
+
+        operations.with_inner_mut(|ops| {
+            task.add_annotation(annotation, ops)
+        })?;
+        Ok(())
+    }
+
     fn set_due(&self, due: Value, operations: &crate::operations::Operations) -> Result<(), Error> {
         let mut task = self.0.get_mut()?;
         let due_datetime = ruby_to_option(due, ruby_to_datetime)?;
@@ -444,6 +476,8 @@ pub fn init(module: &RModule) -> Result<(), Error> {
     class.define_method("add_tag", method!(Task::add_tag, 2))?;
     class.define_method("remove_tag", method!(Task::remove_tag, 2))?;
     class.define_method("add_annotation", method!(Task::add_annotation, 2))?;
+    class.define_method("remove_annotation", method!(Task::remove_annotation, 2))?;
+    class.define_method("add_annotation_with_timestamp", method!(Task::add_annotation_with_timestamp, 3))?;
     class.define_method("set_due", method!(Task::set_due, 2))?;
     class.define_method("set_entry", method!(Task::set_entry, 2))?;
     class.define_method("set_value", method!(Task::set_value, 3))?;

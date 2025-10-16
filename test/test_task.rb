@@ -244,4 +244,141 @@ class TestTask < TaskchampionTest
       retrieved_task.get_timestamp("   ")
     end
   end
+
+  def test_remove_annotation
+    replica = Taskchampion::Replica.new_in_memory
+    operations = Taskchampion::Operations.new
+
+    uuid = SecureRandom.uuid
+    task = replica.create_task(uuid, operations)
+    task.set_description("Test task", operations)
+
+    # Add annotations
+    task.add_annotation("First note", operations)
+    task.add_annotation("Second note", operations)
+    replica.commit_operations(operations)
+
+    # Verify both exist
+    retrieved = replica.task(uuid)
+    assert_equal 2, retrieved.annotations.length
+
+    # Remove first annotation
+    ops2 = Taskchampion::Operations.new
+    annotation_to_remove = retrieved.annotations.first
+    retrieved.remove_annotation(annotation_to_remove, ops2)
+    replica.commit_operations(ops2)
+
+    # Verify only one remains
+    final = replica.task(uuid)
+    assert_equal 1, final.annotations.length
+    assert_equal "Second note", final.annotations.first.description
+  end
+
+  def test_remove_annotation_nonexistent
+    replica = Taskchampion::Replica.new_in_memory
+    operations = Taskchampion::Operations.new
+
+    uuid = SecureRandom.uuid
+    task = replica.create_task(uuid, operations)
+    task.set_description("Test task", operations)
+    task.add_annotation("Note", operations)
+    replica.commit_operations(operations)
+
+    # Create annotation with different timestamp
+    fake_annotation = Taskchampion::Annotation.new(
+      DateTime.now + 1,
+      "Doesn't exist"
+    )
+
+    # Should not raise error (silent success)
+    ops2 = Taskchampion::Operations.new
+    retrieved = replica.task(uuid)
+    assert_nothing_raised do
+      retrieved.remove_annotation(fake_annotation, ops2)
+    end
+    replica.commit_operations(ops2)
+
+    # Original annotation should still exist
+    final = replica.task(uuid)
+    assert_equal 1, final.annotations.length
+  end
+
+  def test_update_annotation
+    replica = Taskchampion::Replica.new_in_memory
+    operations = Taskchampion::Operations.new
+
+    uuid = SecureRandom.uuid
+    task = replica.create_task(uuid, operations)
+    task.set_description("Test task", operations)
+    task.add_annotation("Original note", operations)
+    replica.commit_operations(operations)
+
+    # Get annotation and note its timestamp
+    retrieved = replica.task(uuid)
+    annotation = retrieved.annotations.first
+    original_timestamp = annotation.entry
+
+    # Update annotation
+    ops2 = Taskchampion::Operations.new
+    retrieved.update_annotation(annotation, "Updated note", ops2)
+    replica.commit_operations(ops2)
+
+    # Verify description changed but timestamp preserved
+    final = replica.task(uuid)
+    assert_equal 1, final.annotations.length
+    updated = final.annotations.first
+    assert_equal "Updated note", updated.description
+
+    # Timestamp should be preserved (within 1 second tolerance)
+    time_diff = (updated.entry.to_time - original_timestamp.to_time).abs
+    assert time_diff < 1, "Timestamp should be preserved"
+  end
+
+  def test_update_annotation_empty_description
+    replica = Taskchampion::Replica.new_in_memory
+    operations = Taskchampion::Operations.new
+
+    uuid = SecureRandom.uuid
+    task = replica.create_task(uuid, operations)
+    task.set_description("Test task", operations)
+    task.add_annotation("Note", operations)
+    replica.commit_operations(operations)
+
+    retrieved = replica.task(uuid)
+    annotation = retrieved.annotations.first
+
+    # Should raise validation error for empty description
+    ops2 = Taskchampion::Operations.new
+    assert_raises Taskchampion::ValidationError do
+      retrieved.update_annotation(annotation, "", ops2)
+    end
+
+    assert_raises Taskchampion::ValidationError do
+      retrieved.update_annotation(annotation, "   ", ops2)
+    end
+  end
+
+  def test_add_annotation_with_timestamp
+    replica = Taskchampion::Replica.new_in_memory
+    operations = Taskchampion::Operations.new
+
+    uuid = SecureRandom.uuid
+    task = replica.create_task(uuid, operations)
+    task.set_description("Test task", operations)
+
+    # Add annotation with specific timestamp
+    custom_time = DateTime.new(2025, 1, 15, 12, 30, 0)
+    task.add_annotation_with_timestamp(custom_time, "Custom timestamp note", operations)
+    replica.commit_operations(operations)
+
+    # Verify annotation has the custom timestamp
+    retrieved = replica.task(uuid)
+    assert_equal 1, retrieved.annotations.length
+    annotation = retrieved.annotations.first
+    assert_equal "Custom timestamp note", annotation.description
+
+    # Check timestamp matches
+    time_diff = (annotation.entry.to_time - custom_time.to_time).abs
+    assert time_diff < 1, "Timestamp should match custom time"
+  end
 end

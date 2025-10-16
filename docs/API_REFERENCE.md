@@ -142,8 +142,15 @@ task.add_tag(Taskchampion::Tag.new("work"), operations)
 task.remove_tag(Taskchampion::Tag.new("work"), operations)
 
 # Annotation management
-annotation = Taskchampion::Annotation.new(Time.now, "Added note")
-task.add_annotation(annotation, operations)
+task.add_annotation("Added note", operations)
+
+# Remove annotation
+annotation = task.annotations.first
+task.remove_annotation(annotation, operations)
+
+# Update annotation (preserves original timestamp)
+annotation = task.annotations.first
+task.update_annotation(annotation, "Updated text", operations)
 
 # UDA management
 task.set_uda("namespace", "key", "value", operations)

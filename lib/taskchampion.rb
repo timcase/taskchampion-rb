@@ -57,4 +57,32 @@ module Taskchampion
       commit_undo!(ops)
     end
   end
+
+  # Task convenience methods
+  class Task
+    # Update an existing annotation's description while preserving its timestamp
+    #
+    # This is a convenience method that removes the old annotation and adds a new one
+    # with the same timestamp, effectively updating the description while maintaining
+    # the original creation time for chronological history.
+    #
+    # @param annotation [Taskchampion::Annotation] The annotation to update
+    # @param new_description [String] The new description text
+    # @param operations [Taskchampion::Operations] Operations collection
+    # @return [void]
+    #
+    # @example Update an annotation
+    #   annotation = task.annotations.first
+    #   task.update_annotation(annotation, "Updated note", operations)
+    #   replica.commit_operations(operations)
+    #
+    # @raise [Taskchampion::ValidationError] if new_description is empty or whitespace-only
+    def update_annotation(annotation, new_description, operations)
+      # Remove the old annotation
+      remove_annotation(annotation, operations)
+
+      # Add new annotation with the preserved timestamp
+      add_annotation_with_timestamp(annotation.entry, new_description, operations)
+    end
+  end
 end

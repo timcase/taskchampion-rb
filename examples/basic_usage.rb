@@ -171,6 +171,61 @@ begin
     puts "Task completed using set_status() method and committed"
   end
 
+  # 6b. ANNOTATION MANAGEMENT
+  puts "\n6b. Managing annotations (add, update, remove)"
+
+  # Get a task with annotations
+  task_with_ann = replica.task(uuid1)
+  if task_with_ann && !task_with_ann.annotations.empty?
+    puts "Task '#{task_with_ann.description}' has #{task_with_ann.annotations.length} annotation(s)"
+
+    # Display current annotations
+    puts "Current annotations:"
+    task_with_ann.annotations.each do |ann|
+      puts "  - [#{ann.entry.strftime('%H:%M:%S')}] #{ann.description}"
+    end
+
+    # Update the first annotation (preserves timestamp)
+    operations_ann = Taskchampion::Operations.new
+    first_ann = task_with_ann.annotations.first
+    original_time = first_ann.entry
+
+    puts "\nUpdating first annotation..."
+    task_with_ann.update_annotation(first_ann, "Updated: Started and completed learning TaskChampion", operations_ann)
+    replica.commit_operations(operations_ann)
+
+    # Verify update
+    task_updated = replica.task(uuid1)
+    updated_ann = task_updated.annotations.first
+    puts "Updated annotation: #{updated_ann.description}"
+    puts "Timestamp preserved: #{(updated_ann.entry.to_time - original_time.to_time).abs < 1}"
+
+    # Add a temporary annotation
+    operations_ann2 = Taskchampion::Operations.new
+    task_updated.add_annotation("Temporary progress note", operations_ann2)
+    replica.commit_operations(operations_ann2)
+
+    task_temp = replica.task(uuid1)
+    puts "\nAnnotations after adding temporary note: #{task_temp.annotations.length}"
+    task_temp.annotations.each do |ann|
+      puts "  - #{ann.description}"
+    end
+
+    # Remove the temporary annotation
+    operations_ann3 = Taskchampion::Operations.new
+    temp_ann = task_temp.annotations.find { |a| a.description.include?("Temporary") }
+    if temp_ann
+      task_temp.remove_annotation(temp_ann, operations_ann3)
+      replica.commit_operations(operations_ann3)
+
+      task_final = replica.task(uuid1)
+      puts "\nAnnotations after removal: #{task_final.annotations.length}"
+      task_final.annotations.each do |ann|
+        puts "  - #{ann.description}"
+      end
+    end
+  end
+
   # 7. WORKING WITH WORKING SET
   puts "\n7. Working with Working Set"
 
