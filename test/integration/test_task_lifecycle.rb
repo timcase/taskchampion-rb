@@ -104,6 +104,23 @@ class TestTaskLifecycle < Minitest::Test
     assert_nil final_task.entry
   end
 
+  def test_set_modified_method
+    uuid = SecureRandom.uuid
+    task = @replica.create_task(uuid, @operations)
+    task.set_description("Test modified timestamp", @operations)
+
+    modified_time = Time.now - 7200 # 2 hours ago
+    task.set_modified(modified_time, @operations)
+    @replica.commit_operations(@operations)
+
+    retrieved = @replica.task(uuid)
+    retrieved_modified = retrieved.modified
+
+    refute_nil retrieved_modified
+    time_diff = (retrieved_modified.to_time - modified_time).abs
+    assert time_diff < 1, "Modified time should match what we set (diff: #{time_diff})"
+  end
+
   def test_task_modification_workflow
     uuid = SecureRandom.uuid
     task = @replica.create_task(uuid, @operations)

@@ -303,6 +303,15 @@ impl Task {
         Ok(())
     }
 
+    fn set_modified(&self, modified: Value, operations: &crate::operations::Operations) -> Result<(), Error> {
+        let mut task = self.0.get_mut()?;
+        let modified_datetime = ruby_to_datetime(modified)?;
+        operations.with_inner_mut(|ops| {
+            task.set_modified(modified_datetime, ops)
+        })?;
+        Ok(())
+    }
+
     fn set_value(&self, property: String, value: Value, operations: &crate::operations::Operations) -> Result<(), Error> {
         if property.trim().is_empty() {
             return Err(Error::new(
@@ -480,6 +489,7 @@ pub fn init(module: &RModule) -> Result<(), Error> {
     class.define_method("add_annotation_with_timestamp", method!(Task::add_annotation_with_timestamp, 3))?;
     class.define_method("set_due", method!(Task::set_due, 2))?;
     class.define_method("set_entry", method!(Task::set_entry, 2))?;
+    class.define_method("set_modified", method!(Task::set_modified, 2))?;
     class.define_method("set_value", method!(Task::set_value, 3))?;
     class.define_method("set_timestamp", method!(Task::set_timestamp, 3))?;
     class.define_method("get_timestamp", method!(Task::get_timestamp, 1))?;
