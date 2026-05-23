@@ -58,7 +58,7 @@ impl Replica {
         let tc_task = tc_replica.create_task(tc_uuid, &mut tc_ops).map_err(into_error)?;
 
         // Add the resulting operations to the provided Operations object
-        operations.extend_from_tc(tc_ops);
+        operations.extend_from_tc(tc_ops)?;
 
         // Convert to Ruby Task object
         let task = Task::from_tc_task(tc_task);

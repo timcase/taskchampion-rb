@@ -31,8 +31,6 @@ pub fn datetime_to_ruby(dt: DateTime<Utc>) -> Result<Value, Error> {
 
 /// Convert Ruby DateTime/Time/String to Rust DateTime<Utc> with enhanced validation
 pub fn ruby_to_datetime(value: Value) -> Result<DateTime<Utc>, Error> {
-    let ruby = magnus::Ruby::get().map_err(|e| Error::new(magnus::exception::runtime_error(), e.to_string()))?;
-
     // If it's a string, parse it
     if let Ok(s) = RString::try_convert(value) {
         let s = unsafe { s.as_str()? };
@@ -99,15 +97,6 @@ where
     }
 }
 
-/// Convert HashMap to Ruby Hash
-pub fn hashmap_to_ruby(map: HashMap<String, String>) -> Result<RHash, Error> {
-    let hash = RHash::new();
-    for (k, v) in map {
-        hash.aset(k, v)?;
-    }
-    Ok(hash)
-}
-
 /// Convert Ruby Hash to HashMap
 pub fn ruby_to_hashmap(hash: RHash) -> Result<HashMap<String, String>, Error> {
     let mut map = HashMap::new();
@@ -130,15 +119,3 @@ where
     Ok(array)
 }
 
-/// Convert Ruby Array to Vec
-pub fn ruby_to_vec<T, F>(array: RArray, converter: F) -> Result<Vec<T>, Error>
-where
-    F: Fn(Value) -> Result<T, Error>,
-{
-    let mut vec = Vec::with_capacity(array.len());
-    for i in 0..array.len() {
-        let value: Value = array.entry(i as isize)?;
-        vec.push(converter(value)?);
-    }
-    Ok(vec)
-}

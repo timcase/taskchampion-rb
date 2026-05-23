@@ -11,14 +11,6 @@ pub fn init_errors(module: &RModule) -> Result<(), Error> {
     Ok(())
 }
 
-pub fn base_error() -> magnus::ExceptionClass {
-    let ruby = magnus::Ruby::get().expect("Ruby not available");
-    let module = ruby.class_object().const_get::<_, RModule>("Taskchampion")
-        .expect("Taskchampion module not found");
-    module.const_get::<_, magnus::ExceptionClass>("Error")
-        .expect("Error class not initialized")
-}
-
 pub fn thread_error() -> magnus::ExceptionClass {
     let ruby = magnus::Ruby::get().expect("Ruby not available");
     let module = ruby.class_object().const_get::<_, RModule>("Taskchampion")

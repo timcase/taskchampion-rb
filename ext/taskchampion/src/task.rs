@@ -137,24 +137,22 @@ impl Task {
 
     fn get_uda(&self, namespace: String, key: String) -> Result<Value, Error> {
         let task = self.0.get()?;
-        match task.get_uda(&namespace, &key) {
+        let combined_key = if namespace.is_empty() { key } else { format!("{}.{}", namespace, key) };
+        match task.get_user_defined_attribute(&combined_key) {
             Some(value) => Ok(value.into_value()),
-            None => Ok(().into_value()), // () converts to nil in Magnus
+            None => Ok(().into_value()),
         }
     }
 
     fn udas(&self) -> Result<RArray, Error> {
         let task = self.0.get()?;
-        let udas: Vec<((String, String), String)> = task.get_udas()
-            .map(|((ns, key), value)| ((ns.to_string(), key.to_string()), value.to_string()))
+        let udas: Vec<(String, String)> = task.get_user_defined_attributes()
+            .map(|(key, value)| (key.to_string(), value.to_string()))
             .collect();
 
-        vec_to_ruby(udas, |(key_tuple, value)| {
+        vec_to_ruby(udas, |(key, value)| {
             let array = RArray::new();
-            let key_array = RArray::new();
-            key_array.push(key_tuple.0)?;
-            key_array.push(key_tuple.1)?;
-            array.push(key_array)?;
+            array.push(key)?;
             array.push(value)?;
             Ok(array.into_value())
         })
@@ -360,7 +358,7 @@ impl Task {
             Some(timestamp_str) => {
                 // Parse the string as Unix timestamp (seconds since epoch)
                 if let Ok(timestamp_secs) = timestamp_str.parse::<i64>() {
-                    use chrono::{DateTime, Utc};
+                    use chrono::DateTime;
                     if let Some(dt) = DateTime::from_timestamp(timestamp_secs, 0) {
                         return datetime_to_ruby(dt);
                     }
@@ -387,8 +385,9 @@ impl Task {
         }
 
         let mut task = self.0.get_mut()?;
+        let combined_key = format!("{}.{}", namespace, key);
         operations.with_inner_mut(|ops| {
-            task.set_uda(&namespace, &key, &value, ops)
+            task.set_user_defined_attribute(&combined_key, &value, ops)
         })?;
         Ok(())
     }
@@ -408,8 +407,9 @@ impl Task {
         }
 
         let mut task = self.0.get_mut()?;
+        let combined_key = format!("{}.{}", namespace, key);
         operations.with_inner_mut(|ops| {
-            task.remove_uda(&namespace, &key, ops)
+            task.remove_user_defined_attribute(&combined_key, ops)
         })?;
         Ok(())
     }

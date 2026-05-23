@@ -32,12 +32,12 @@ impl<T> ThreadBound<T> {
         Ok(())
     }
 
-    pub fn get(&self) -> Result<std::cell::Ref<T>, Error> {
+    pub fn get(&self) -> Result<std::cell::Ref<'_, T>, Error> {
         self.check_thread()?;
         Ok(self.inner.borrow())
     }
 
-    pub fn get_mut(&self) -> Result<std::cell::RefMut<T>, Error> {
+    pub fn get_mut(&self) -> Result<std::cell::RefMut<'_, T>, Error> {
         self.check_thread()?;
         Ok(self.inner.borrow_mut())
     }
