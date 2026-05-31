@@ -262,9 +262,9 @@ class TestTask < TaskchampionTest
     retrieved = replica.task(uuid)
     assert_equal 2, retrieved.annotations.length
 
-    # Remove first annotation
+    # Remove the "First note" annotation
     ops2 = Taskchampion::Operations.new
-    annotation_to_remove = retrieved.annotations.first
+    annotation_to_remove = retrieved.annotations.find { |a| a.description == "First note" }
     retrieved.remove_annotation(annotation_to_remove, ops2)
     replica.commit_operations(ops2)
 
