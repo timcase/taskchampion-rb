@@ -170,6 +170,21 @@ class TestSyncOperations < Minitest::Test
     end
   end
 
+  def test_remote_sync_error_includes_underlying_cause
+    # Sync against an unreachable server; the raised error must carry
+    # the underlying cause (e.g. connection refused), not just the
+    # generic "Failed to synchronize with server" context line.
+    error = assert_raises(Taskchampion::Error) do
+      @replica.sync_to_remote(
+        url: "http://127.0.0.1:1",
+        client_id: SecureRandom.uuid,
+        encryption_secret: "test-secret"
+      )
+    end
+
+    assert_match(/Failed to synchronize with server: .+/, error.message)
+  end
+
   def test_gcp_sync_validation
     # Test that GCP sync requires proper parameters
     assert_raises(ArgumentError, NoMethodError) do

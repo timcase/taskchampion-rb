@@ -58,6 +58,10 @@ pub fn map_taskchampion_error(error: taskchampion::Error) -> Error {
         taskchampion::Error::OutOfSync     => Error::new(out_of_sync_error(),
                                                  "Local replica is out of sync with the server"),
         taskchampion::Error::Usage(msg)    => Error::new(validation_error(), msg),
+        // anyhow's alternate format renders the full cause chain
+        // ("context: cause: root cause"), not just the top context line.
+        taskchampion::Error::Other(err)    => Error::new(storage_error(),
+                                                 format!("{err:#}")),
         _                                  => Error::new(storage_error(), error.to_string()),
     }
 }
