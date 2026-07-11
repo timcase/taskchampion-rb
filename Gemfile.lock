@@ -1,7 +1,7 @@
 PATH
   remote: .
   specs:
-    taskchampion-rb (0.9.3)
+    taskchampion-rb (0.9.4)
       rb_sys (~> 0.9.91)
 
 GEM
