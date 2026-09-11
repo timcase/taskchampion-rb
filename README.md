@@ -16,11 +16,19 @@ This gem supports Ruby 3.3 and later. We follow Ruby's end-of-life (EOL) schedul
 ### Prerequisites
 
 1. Ruby 3.3 or later
-2. Rust toolchain (install from https://rustup.rs/)
+2. A C compiler and `clang`/`libclang` development headers — `rb-sys` runs
+   libclang over Ruby's headers to generate FFI bindings during `rake compile`.
+   - **Debian/Ubuntu:** `sudo apt install clang libclang-dev`
+   - **macOS:** `xcode-select --install`
+3. Rust toolchain (optional — if `cargo` is not found, `rb-sys` bootstraps its
+   own rustup + toolchain during the build). To install it yourself:
 
 ```bash
 curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
 ```
+
+> SQLite is compiled from source into the extension (the `bundled` feature), so
+> no system SQLite / `libsqlite3-dev` is required.
 
 ### Building from source
 

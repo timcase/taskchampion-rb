@@ -2,6 +2,15 @@
 
 - Drop support for Ruby 3.2 (reached EOL March 2026). Minimum supported
   Ruby is now 3.3; CI tests 3.3, 3.4, and 3.5.
+- Enable the `bundled` feature of the `taskchampion` crate so SQLite is
+  compiled from source into the extension. Previously `default-features
+  = false` dropped `bundled`, making the build link against system
+  SQLite and fail with `cannot find -lsqlite3` on any host without
+  `libsqlite3-dev` installed.
+- Expand README build prerequisites: `clang`/`libclang-dev` (needed by
+  `rb-sys` bindgen) on Linux, `xcode-select --install` on macOS, and
+  note that the Rust toolchain is optional since `rb-sys` bootstraps
+  one.
 
 ## [0.9.4] - 2026-07-11
 
