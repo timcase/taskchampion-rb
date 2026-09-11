@@ -1,5 +1,8 @@
 ## [Unreleased]
 
+- Drop support for Ruby 3.2 (reached EOL March 2026). Minimum supported
+  Ruby is now 3.3; CI tests 3.3, 3.4, and 3.5.
+
 ## [0.9.4] - 2026-07-11
 
 - Include the full cause chain in sync error messages. TaskChampion

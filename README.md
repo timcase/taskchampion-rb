@@ -2,20 +2,20 @@
 
 Ruby bindings for TaskChampion, the task database that powers Taskwarrior.
 
-## Ruby Version Support (2025-08-12)
+## Ruby Version Support (2026-09-10)
 
-This gem supports Ruby 3.2 and later. We follow Ruby's end-of-life (EOL) schedule and drop support for Ruby versions that have reached EOL.
+This gem supports Ruby 3.3 and later. We follow Ruby's end-of-life (EOL) schedule and drop support for Ruby versions that have reached EOL.
 
-- **Ruby 3.2**: Supported (EOL: March 2026)
-- **Ruby 3.3**: Supported (Current stable)
-- **Ruby 3.4**: Supported
-- **Ruby 3.0-3.1**: Not supported (reached EOL)
+- **Ruby 3.3**: Supported
+- **Ruby 3.4**: Supported (Current stable)
+- **Ruby 3.5**: Supported
+- **Ruby 3.0-3.2**: Not supported (reached EOL)
 
 ## Installation
 
 ### Prerequisites
 
-1. Ruby 3.2 or later
+1. Ruby 3.3 or later
 2. Rust toolchain (install from https://rustup.rs/)
 
 ```bash
