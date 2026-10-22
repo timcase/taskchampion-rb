@@ -1,4 +1,4 @@
-## [Unreleased]
+## [0.9.7] - 2026-10-22
 
 - Link the system `libsqlite3` by default again, as 0.9.4 did, so
   `libsqlite3-dev` is once more a build prerequisite on Linux. Since
