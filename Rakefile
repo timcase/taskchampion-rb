@@ -32,10 +32,17 @@ task :publish, [:version] do |t, args|
   version = args[:version] || "patch"
 
   puts "Bumping version (#{version})..."
-  sh "bump #{version} --tag"
+  # Commit and tag here rather than with bump --tag: bump's "vX.Y.Z"
+  # subject fails the commit-msg hook, and bump tags even when the
+  # commit fails.
+  sh "bump #{version} --no-commit"
+  new_version = `bump current --value-only`.strip
+  sh "git add lib/taskchampion/version.rb Gemfile.lock"
+  sh "git commit -m 'Bump to v#{new_version}'"
+  sh "git tag -a v#{new_version} -m v#{new_version}"
 
   puts "Pushing to git..."
-  sh "git push && git push --tags"
+  sh "git push && git push origin v#{new_version}"
 
   puts "Building and releasing gem..."
   Rake::Task["release"].invoke
