@@ -1,7 +1,17 @@
-## [Unreleased]
+## [0.9.6] - 2026-10-22
+
+- Update `rb-sys` to 0.9.130 (pulling in `bindgen` 0.72.1) in
+  `Cargo.lock`. The previously locked `bindgen` 0.69.5 cannot parse
+  Ruby's `rb_data_type_struct` with libclang 22, as shipped on Ubuntu
+  26.04, so `magnus` failed to compile there.
+- Drop the stale Ruby 3.5 preview from the CI matrix; CI now tests 3.3
+  and 3.4. Ruby 4.0 is not yet supported (`magnus` 0.7 does not build
+  against it).
+
+## [0.9.5] - 2026-09-10
 
 - Drop support for Ruby 3.2 (reached EOL March 2026). Minimum supported
-  Ruby is now 3.3; CI tests 3.3, 3.4, and 3.5.
+  Ruby is now 3.3.
 - Enable the `bundled` feature of the `taskchampion` crate so SQLite is
   compiled from source into the extension. Previously `default-features
   = false` dropped `bundled`, making the build link against system
