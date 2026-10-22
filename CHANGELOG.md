@@ -1,3 +1,15 @@
+## [Unreleased]
+
+- Link the system `libsqlite3` by default again, as 0.9.4 did, so
+  `libsqlite3-dev` is once more a build prerequisite on Linux. Since
+  0.9.5 the extension compiled its own copy of SQLite, which leaves two
+  SQLite copies in any process that also loads the `sqlite3` gem; they
+  do not share POSIX file locks, which can corrupt the database.
+- Add an opt-in switch for bundled SQLite: set
+  `TASKCHAMPION_BUNDLED_SQLITE=1` or pass `--with-bundled-sqlite` at
+  install time. Only use it when nothing else in the process loads
+  SQLite.
+
 ## [0.9.6] - 2026-10-22
 
 - Update `rb-sys` to 0.9.130 (pulling in `bindgen` 0.72.1) in
