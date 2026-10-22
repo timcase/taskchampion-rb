@@ -32,6 +32,10 @@ jobs:
           clang --version || echo "Clang not found in PATH"
         shell: bash
 
+      - name: Install system SQLite (Linux only)
+        if: runner.os == 'Linux'
+        run: sudo apt-get update && sudo apt-get install -y libsqlite3-dev
+
       - name: Set up Ruby & Rust
         uses: oxidize-rb/actions/setup-ruby-and-rust@v1
         with:
@@ -57,6 +61,19 @@ jobs:
           # Fix bindgen/Clang issues with AVX512 intrinsics on Windows
           # Disable problematic intrinsics that cause errors with Clang 20
           BINDGEN_EXTRA_CLANG_ARGS: ${{ runner.os == 'Windows' && '-U__AVX512F__ -U__AVX10_2_512__ -U__AVX10_2__ -U__AMX_AVX512__' || '' }}
+
+      # The default build must link the system libsqlite3, not a bundled
+      # copy, so it shares file locks with the sqlite3 gem in one process.
+      - name: Check system SQLite linkage
+        if: runner.os != 'Windows'
+        run: |
+          if [ "$RUNNER_OS" = "Linux" ]; then
+            ldd lib/taskchampion/taskchampion.so | tee /dev/stderr \
+              | grep -q 'libsqlite3\.so'
+          else
+            otool -L lib/taskchampion/taskchampion.bundle | tee /dev/stderr \
+              | grep -q 'libsqlite3'
+          fi
 
   lint:
     runs-on: ubuntu-latest
