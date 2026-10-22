@@ -12,11 +12,15 @@ crate-type = ["cdylib"]
 [dependencies]
 magnus = { version = "0.7", features = ["rb-sys"] }
 rb-sys = "0.9.103"
-# `bundled` compiles SQLite from source into the extension so the build does not
-# depend on the host having libsqlite3-dev / a compatible system SQLite.
-taskchampion = { version = "2.0", default-features = false, features = ["bundled", "server-sync", "server-gcp"] }
+# SQLite is linked from the system by default. See the bundled-sqlite feature.
+taskchampion = { version = "2.0", default-features = false, features = ["server-sync", "server-gcp"] }
 chrono = "0.4"
 uuid = "1.0"
 
 [features]
 default = ["rb-sys/stable-api-compiled-fallback"]
+# Compile a private copy of SQLite into the extension instead of linking the
+# system libsqlite3. Do not enable this in a process that also loads another
+# SQLite (e.g. the sqlite3 gem): two copies do not share POSIX file locks,
+# which can corrupt the database. Enabled through extconf.rb.
+bundled-sqlite = ["taskchampion/bundled"]

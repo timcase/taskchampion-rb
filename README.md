@@ -20,15 +20,35 @@ This gem supports Ruby 3.3 and later. We follow Ruby's end-of-life (EOL) schedul
    libclang over Ruby's headers to generate FFI bindings during `rake compile`.
    - **Debian/Ubuntu:** `sudo apt install clang libclang-dev`
    - **macOS:** `xcode-select --install`
-3. Rust toolchain (optional — if `cargo` is not found, `rb-sys` bootstraps its
+3. System SQLite development files — the extension links the system
+   `libsqlite3` by default.
+   - **Debian/Ubuntu:** `sudo apt install libsqlite3-dev`
+   - **macOS:** nothing to install; the OS ships `libsqlite3`.
+4. Rust toolchain (optional — if `cargo` is not found, `rb-sys` bootstraps its
    own rustup + toolchain during the build). To install it yourself:
 
 ```bash
 curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
 ```
 
-> SQLite is compiled from source into the extension (the `bundled` feature), so
-> no system SQLite / `libsqlite3-dev` is required.
+### Bundled SQLite (opt-in)
+
+To compile SQLite from source into the extension instead of linking the
+system library, set the switch at install time:
+
+```bash
+TASKCHAMPION_BUNDLED_SQLITE=1 gem install taskchampion-rb
+# or
+gem install taskchampion-rb -- --with-bundled-sqlite
+# or, with Bundler
+bundle config build.taskchampion-rb --with-bundled-sqlite
+```
+
+> **Warning:** do not use bundled SQLite in a process that also loads another
+> copy of SQLite, such as the `sqlite3` gem (e.g. a Rails app). Two SQLite
+> copies in one process do not see each other's POSIX file locks, which can
+> corrupt the database. Bundling is only safe when taskchampion-rb is the sole
+> SQLite user in the process.
 
 ### Building from source
 
